@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMARTBUS &bull; Reset System Data — GlobalRide</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Shared GlobalRide Design System -->
+  <link rel="stylesheet" href="globalride.css">
+
+  <style>
+    body {
+      background: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+    }
+
+    .reset-container {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Top Breadcrumb & Header */
+    .reset-top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .reset-hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 36px 40px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .reset-hero::before {
+      content: '';
+      position: absolute;
+      right: -50px;
+      top: -50px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0) 70%);
+      pointer-events: none;
+    }
+
+    .warning-banner {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-left: 5px solid #ef4444;
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      color: #991b1b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Presets Selector */
+    .preset-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: #ffffff;
+      padding: 14px 18px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-sm);
+      align-items: center;
+    }
+
+    .preset-btn {
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-body);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+
+    .preset-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .preset-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: var(--shadow-blue);
+    }
+
+    .preset-btn.danger-active {
+      background: #ef4444;
+      color: #ffffff;
+      border-color: #ef4444;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+
+    /* Category Cards Grid */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .categories-grid {
+        grid-template-columns: 1fr;
+      }
+      .reset-hero {
+        padding: 24px 20px;
+      }
+    }
+
+    .category-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: border-color var(--transition-fast);
+    }
+
+    .category-card:hover {
+      border-color: #cbd5e1;
+    }
+
+    .cat-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cat-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 6px 0;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-body);
+      user-select: none;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--primary);
+      margin-top: 2px;
+      cursor: pointer;
+    }
+
+    .checkbox-item.danger input[type="checkbox"] {
+      accent-color: #ef4444;
+    }
+
+    .checkbox-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* Action Trigger Footer */
+    .action-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 24px 30px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .btn-danger-reset {
+      background: #dc2626;
+      color: #ffffff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: var(--radius-pill);
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-danger-reset:hover {
+      background: #b91c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(220, 38, 38, 0.5);
+    }
+
+    /* Summary Checklist Card */
+    .summary-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 30px;
+      border: 1px solid #6ee7b7;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.12);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 14px;
+      color: #0f172a;
+      border-bottom: 1px dashed var(--border-subtle);
+    }
+
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+
+    .summary-check {
+      color: #10b981;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    /* Modal styles */
+    .confirm-input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      border: 2px solid #cbd5e1;
+      outline: none;
+      margin: 12px 0 16px 0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    .confirm-input:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reset-container">
+    
+    <!-- Top Navigation Header -->
+    <header class="reset-top-header">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="brand-logo-icon" style="width:40px; height:40px; font-size:18px;">🚍</div>
+        <div>
+          <div class="brand-text" style="font-size:20px;">GLOBAL<span>RIDE</span></div>
+          <div style="font-size:11px; color:var(--text-muted); font-weight:600;">SMARTBUS MAINTENANCE &bull; SYSTEM RESET ENGINE</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="driver_dashboard.html" class="btn-gr btn-gr-outline" style="font-size:12px; padding:6px 14px;">
+          🚍 Driver Console
+        </a>
+        <a href="index.html" class="btn-gr btn-gr-outline" style="font-size:12px; padding:6px 14px;">
+          🏠 Main Hub
+        </a>
+      </div>
+    </header>
+
+    <!-- Hero Banner -->
+    <section class="reset-hero">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="gr-pill-badge" style="background:#ef4444; color:#fff; font-weight:700;">ADMINISTRATIVE MAINTENANCE</span>
+        <span style="font-family:'IBM Plex Mono'; font-size:12px; color:#cbd5e1;">STORAGE &bull; SESSIONS &bull; FIREBASE CLOUD</span>
+      </div>
+
+      <h1 style="font-family:'Space Grotesk'; font-size:32px; font-weight:800; margin-top:12px; line-height:1.2;">
+        SMARTBUS &bull; Reset System Data
+      </h1>
+      <p style="color:#cbd5e1; font-size:15px; max-width:740px; margin-top:8px; line-height:1.5;">
+        Resetting the system will remove stored demo/application data and restore SMARTBUS to its initial clean state. Select specific data categories or perform a complete factory reset.
+      </p>
+    </section>
+
+    <!-- Warning Callout -->
+    <div class="warning-banner">
+      <div style="font-size:24px; line-height:1;">⚠️</div>
+      <div>
+        <strong style="font-size:15px; color:#7f1d1d;">Caution: This action cannot be easily undone.</strong>
+        <p style="margin-top:2px; color:#991b1b;">
+          Resetting will clear selected LocalStorage caches and synchronize with Firebase Realtime Database. Always ensure active test sessions are concluded before resetting.
+        </p>
+      </div>
+    </div>
+
+    <!-- PRESETS & QUICK SELECTION BAR -->
+    <div class="preset-bar">
+      <span style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
+        Quick Presets:
+      </span>
+      <button type="button" class="preset-btn active" id="presetBtnApp" onclick="applyPreset('app')">
+        ⚡ Application Data Reset (Keep Drivers)
+      </button>
+      <button type="button" class="preset-btn" id="presetBtnFactory" onclick="applyPreset('factory')">
+        🏭 Factory Reset (Complete Clean Wipe)
+      </button>
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button type="button" class="btn-gr btn-gr-outline" style="font-size:11px; padding:4px 10px;" onclick="selectAll(true)">
+          Select All
+        </button>
+        <button type="button" class="btn-gr btn-gr-outline" style="font-size:11px; padding:4px 10px;" onclick="selectAll(false)">
+          Clear All
+        </button>
+      </div>
+    </div>
+
+    <!-- CATEGORIES CHECKBOX MATRIX -->
+    <div class="categories-grid" id="categoriesGrid">
+      
+      <!-- Category 1: Driver Data -->
+      <div class="category-card" style="border-left:4px solid #3b82f6;">
+        <div class="cat-header">
+          <div class="cat-icon" style="background:#eff6ff; color:#2563eb;">🚍</div>
+          <div>
+            <h3 style="font-family:'Space Grotesk'; font-size:16px; font-weight:700;">Driver Data</h3>
+            <p style="font-size:12px; color:var(--text-muted);">Accounts &amp; Active Sessions</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="checkbox-item danger">
+            <input type="checkbox" id="chkClearDrivers">
+            <div>
+              <strong>Reset Registered Drivers</strong>
+              <div class="checkbox-meta">Restores default demo drivers (DRV001, DRV002, DRV003); removes newly created driver accounts from local state &amp; Firebase /drivers.</div>
+            </div>
+          </label>
+
+          <label class="checkbox-item" style="margin-top:6px;">
+            <input type="checkbox" id="chkClearSessions" checked>
+            <div>
+              <strong>Driver Sessions &amp; Login State</strong>
+              <div class="checkbox-meta">Clears active session token (smartbus_driver_session) and requires re-login on next visit.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Category 2: Attendance & Scan History -->
+      <div class="category-card" style="border-left:4px solid #10b981;">
+        <div class="cat-header">
+          <div class="cat-icon" style="background:#d1fae5; color:#059669;">📋</div>
+          <div>
+            <h3 style="font-family:'Space Grotesk'; font-size:16px; font-weight:700;">Attendance &amp; Scans</h3>
+            <p style="font-size:12px; color:var(--text-muted);">Boarding Logs &amp; RFID Activity</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="checkbox-item">
+            <input type="checkbox" id="chkClearAttendance" checked>
+            <div>
+              <strong>Attendance Logs</strong>
+              <div class="checkbox-meta">Clears boarding and safe landing logs (smartbus_attendance_logs &amp; Firebase /attendance).</div>
+            </div>
+          </label>
+
+          <label class="checkbox-item" style="margin-top:6px;">
+            <input type="checkbox" id="chkClearScans" checked>
+            <div>
+              <strong>RFID Scan History &amp; Unknown Cards</strong>
+              <div class="checkbox-meta">Clears live RFID tap history (smartbus_scan_history), pending scans, and unknown cards queue.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Category 3: Bus Runtime & Telemetry -->
+      <div class="category-card" style="border-left:4px solid #f59e0b;">
+        <div class="cat-header">
+          <div class="cat-icon" style="background:#fef3c7; color:#d97706;">📍</div>
+          <div>
+            <h3 style="font-family:'Space Grotesk'; font-size:16px; font-weight:700;">Bus Data &amp; Telemetry</h3>
+            <p style="font-size:12px; color:var(--text-muted);">GPS, Occupancy &amp; Alerts</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="checkbox-item">
+            <input type="checkbox" id="chkClearBus" checked>
+            <div>
+              <strong>Current Bus Runtime Information</strong>
+              <div class="checkbox-meta">Resets occupancy counter to 0, current stop to "Erode Stand", and GPS position (smartbus_busdata &amp; /bus/BUS001).</div>
+            </div>
+          </label>
+
+          <label class="checkbox-item" style="margin-top:6px;">
+            <input type="checkbox" id="chkClearSOS" checked>
+            <div>
+              <strong>Emergency SOS State</strong>
+              <div class="checkbox-meta">Clears active emergency distress beacon (smartbus_sos).</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Category 4: Student Data & Modifications -->
+      <div class="category-card" style="border-left:4px solid #8b5cf6;">
+        <div class="cat-header">
+          <div class="cat-icon" style="background:#f3e8ff; color:#7e22ce;">👥</div>
+          <div>
+            <h3 style="font-family:'Space Grotesk'; font-size:16px; font-weight:700;">Student Data</h3>
+            <p style="font-size:12px; color:var(--text-muted);">Roster &amp; Custom Boarding Pins</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="checkbox-item">
+            <input type="checkbox" id="chkClearStudents" checked>
+            <div>
+              <strong>Student Modifications &amp; Map Pins</strong>
+              <div class="checkbox-meta">Restores original student roster (INITIAL_STUDENTS), clearing custom pickup locations and status changes (Firebase /users).</div>
+            </div>
+          </label>
+
+          <label class="checkbox-item" style="margin-top:6px;">
+            <input type="checkbox" id="chkResetFirebase" checked>
+            <div>
+              <strong>Firebase Cloud Realtime Database</strong>
+              <div class="checkbox-meta">Wipes cloud endpoints matching selected categories (/attendance, /bus/BUS001, /drivers, /users).</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ACTION TRIGGER FOOTER -->
+    <div class="action-card" id="actionCard">
+      <div>
+        <h4 style="font-family:'Space Grotesk'; font-size:16px; font-weight:700; color:var(--text-main);">
+          Ready to Reset Selected SMARTBUS Data?
+        </h4>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:2px;" id="selectedScopeSummary">
+          Selected: Application Data (Attendance, Scans, Telemetry, Students, Firebase Cloud)
+        </p>
+      </div>
+
+      <button type="button" class="btn-danger-reset" onclick="openConfirmModal()">
+        <span>🗑️</span> RESET SYSTEM DATA
+      </button>
+    </div>
+
+    <!-- POST-RESET RESULTS SUMMARY CARD (Hidden until reset completes) -->
+    <div class="summary-card" id="postResetSummary" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:44px; height:44px; border-radius:50%; background:#d1fae5; color:#059669; display:flex; align-items:center; justify-content:center; font-size:22px;">
+            ✓
+          </div>
+          <div>
+            <h3 style="font-family:'Space Grotesk'; font-size:20px; font-weight:800; color:#065f46;">
+              System Reset Successful
+            </h3>
+            <p style="font-size:13px; color:#047857; margin-top:2px;" id="summaryTimestamp">
+              Completed just now &bull; Application restored to clean baseline state
+            </p>
+          </div>
+        </div>
+        <span class="gr-pill-badge gr-pill-green">🟢 Synced</span>
+      </div>
+
+      <div style="background:#f8fafc; border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:16px 20px; margin-bottom:20px;" id="summaryChecklist">
+        <!-- Checklist items populated via JS -->
+      </div>
+
+      <!-- Cloud status notice -->
+      <div id="firebaseStatusNotice" style="margin-bottom:20px; font-size:13px;"></div>
+
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="driver_auth.html" class="btn-gr btn-gr-primary" style="text-decoration:none;">
+          🔑 Open Driver Login &rarr;
+        </a>
+        <a href="index.html" class="btn-gr btn-gr-outline" style="text-decoration:none;">
+          🏠 Return to Landing Hub
+        </a>
+        <a href="bus_dashboard.html" class="btn-gr btn-gr-outline" style="text-decoration:none;">
+          ⚡ Master Studio
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div class="gr-modal-backdrop" id="modalConfirmReset">
+    <div class="gr-modal" style="border-top:6px solid #ef4444; max-width:500px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-family:'Space Grotesk'; color:#b91c1c; font-size:20px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>⚠️</span> Confirm System Reset
+        </h3>
+        <button onclick="closeModal('modalConfirmReset')" style="background:none; border:none; font-size:22px; cursor:pointer;">&times;</button>
+      </div>
+
+      <p style="font-size:14px; color:var(--text-body); line-height:1.5;">
+        Are you sure you want to reset SMARTBUS data? This will remove the selected information and restore the system to its initial state.
+      </p>
+
+      <!-- Dynamic Scope List in Modal -->
+      <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:var(--radius-md); padding:12px 16px; margin:14px 0; font-size:13px; color:#991b1b;" id="modalScopeDetails">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- Extra Safety Typing Requirement for Factory Reset -->
+      <div id="safetyTypeSection" style="display:none;">
+        <label style="font-size:12px; font-weight:700; color:#7f1d1d; display:block;">
+          TYPE <strong style="font-family:'IBM Plex Mono'; color:#b91c1c;">RESET</strong> BELOW TO CONFIRM FULL / FACTORY WIPE:
+        </label>
+        <input type="text" id="confirmResetInput" class="confirm-input" placeholder="Type RESET" oninput="handleConfirmInput()">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; border-top:1px solid var(--border-subtle); padding-top:16px;">
+        <button type="button" class="btn-gr btn-gr-outline" onclick="closeModal('modalConfirmReset')">
+          Cancel
+        </button>
+        <button type="button" id="btnExecuteReset" class="btn-gr btn-gr-danger" onclick="executeReset()" style="font-weight:700; padding:10px 22px;">
+          <span id="btnResetText">Continue Reset</span>
+          <span id="btnResetSpinner" class="spinner" style="display:none;"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Store -->
+  <script src="shared_store.js"></script>
+
+  <script>
+    let currentPreset = 'app';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      applyPreset('app');
+      updateScopeSummary();
+
+      // Listen for checkbox changes to update UI
+      document.querySelectorAll('#categoriesGrid input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', () => {
+          updateScopeSummary();
+        });
+      });
+    });
+
+    // Preset Applicator
+    function applyPreset(type) {
+      currentPreset = type;
+      const btnApp = document.getElementById('presetBtnApp');
+      const btnFactory = document.getElementById('presetBtnFactory');
+
+      if (type === 'app') {
+        btnApp.className = 'preset-btn active';
+        btnFactory.className = 'preset-btn';
+
+        document.getElementById('chkClearDrivers').checked = false;
+        document.getElementById('chkClearSessions').checked = true;
+        document.getElementById('chkClearAttendance').checked = true;
+        document.getElementById('chkClearScans').checked = true;
+        document.getElementById('chkClearBus').checked = true;
+        document.getElementById('chkClearSOS').checked = true;
+        document.getElementById('chkClearStudents').checked = true;
+        document.getElementById('chkResetFirebase').checked = true;
+      } else if (type === 'factory') {
+        btnApp.className = 'preset-btn';
+        btnFactory.className = 'preset-btn danger-active';
+
+        document.getElementById('chkClearDrivers').checked = true;
+        document.getElementById('chkClearSessions').checked = true;
+        document.getElementById('chkClearAttendance').checked = true;
+        document.getElementById('chkClearScans').checked = true;
+        document.getElementById('chkClearBus').checked = true;
+        document.getElementById('chkClearSOS').checked = true;
+        document.getElementById('chkClearStudents').checked = true;
+        document.getElementById('chkResetFirebase').checked = true;
+      }
+
+      updateScopeSummary();
+    }
+
+    function selectAll(state) {
+      document.querySelectorAll('#categoriesGrid input[type="checkbox"]').forEach(chk => {
+        chk.checked = state;
+      });
+      document.getElementById('presetBtnApp').className = 'preset-btn';
+      document.getElementById('presetBtnFactory').className = 'preset-btn';
+      updateScopeSummary();
+    }
+
+    function updateScopeSummary() {
+      const isDrivers = document.getElementById('chkClearDrivers').checked;
+      const isSessions = document.getElementById('chkClearSessions').checked;
+      const isAtt = document.getElementById('chkClearAttendance').checked;
+      const isScans = document.getElementById('chkClearScans').checked;
+      const isBus = document.getElementById('chkClearBus').checked;
+      const isStudents = document.getElementById('chkClearStudents').checked;
+
+      const items = [];
+      if (isDrivers) items.push("Registered Drivers");
+      if (isSessions) items.push("Sessions");
+      if (isAtt) items.push("Attendance");
+      if (isScans) items.push("RFID Scans");
+      if (isBus) items.push("Bus Telemetry");
+      if (isStudents) items.push("Student Data");
+
+      const label = document.getElementById('selectedScopeSummary');
+      if (items.length === 0) {
+        label.textContent = "No data categories selected.";
+      } else {
+        label.textContent = `Selected to clear: ${items.join(', ')}.`;
+      }
+    }
+
+    // Modal Display & Verification
+    function openConfirmModal() {
+      const isDrivers = document.getElementById('chkClearDrivers').checked;
+      const safetyBox = document.getElementById('safetyTypeSection');
+      const confirmInput = document.getElementById('confirmResetInput');
+      const btnExec = document.getElementById('btnExecuteReset');
+      const scopeDetails = document.getElementById('modalScopeDetails');
+
+      // Scope description in modal
+      const isAtt = document.getElementById('chkClearAttendance').checked;
+      const isScans = document.getElementById('chkClearScans').checked;
+      const isBus = document.getElementById('chkClearBus').checked;
+      const isStudents = document.getElementById('chkClearStudents').checked;
+      const isCloud = document.getElementById('chkResetFirebase').checked;
+
+      let listHtml = '<ul style="margin-left:16px; margin-top:4px;">';
+      if (isDrivers) listHtml += '<li><strong>Driver Accounts:</strong> Reset to demo baseline (DRV001, DRV002, DRV003).</li>';
+      if (isAtt) listHtml += '<li><strong>Attendance:</strong> Clear all boarding and landing logs.</li>';
+      if (isScans) listHtml += '<li><strong>RFID Scans:</strong> Clear scan history &amp; unknown cards queue.</li>';
+      if (isBus) listHtml += '<li><strong>Bus Telemetry:</strong> Reset occupancy, GPS, and SOS alarm.</li>';
+      if (isStudents) listHtml += '<li><strong>Student Data:</strong> Restore original student roster and map stops.</li>';
+      if (isCloud) listHtml += '<li><strong>Firebase Cloud:</strong> Synchronize deletions with cloud Realtime DB.</li>';
+      listHtml += '</ul>';
+      scopeDetails.innerHTML = listHtml;
+
+      // If resetting drivers (Factory Reset), enforce typing RESET
+      if (isDrivers) {
+        safetyBox.style.display = 'block';
+        confirmInput.value = '';
+        btnExec.disabled = true;
+        btnExec.textContent = 'Type RESET to Enable';
+      } else {
+        safetyBox.style.display = 'none';
+        btnExec.disabled = false;
+        btnExec.textContent = 'Continue Reset';
+      }
+
+      document.getElementById('modalConfirmReset').classList.add('active');
+    }
+
+    function handleConfirmInput() {
+      const val = document.getElementById('confirmResetInput').value.trim().toUpperCase();
+      const btnExec = document.getElementById('btnExecuteReset');
+      if (val === 'RESET') {
+        btnExec.disabled = false;
+        btnExec.textContent = 'Confirm & Wipe Data';
+      } else {
+        btnExec.disabled = true;
+        btnExec.textContent = 'Type RESET to Enable';
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // ==========================================
+    // EXECUTE SYSTEM RESET
+    // ==========================================
+    async function executeReset() {
+      const btnExec = document.getElementById('btnExecuteReset');
+      const btnSpinner = document.getElementById('btnResetSpinner');
+      
+      btnExec.disabled = true;
+      btnExec.textContent = 'Executing Reset...';
+      if (btnSpinner) btnSpinner.style.display = 'inline-block';
+
+      const options = {
+        clearDrivers: document.getElementById('chkClearDrivers').checked,
+        clearSessions: document.getElementById('chkClearSessions').checked,
+        clearAttendance: document.getElementById('chkClearAttendance').checked,
+        clearScans: document.getElementById('chkClearScans').checked,
+        clearBusData: document.getElementById('chkClearBus').checked,
+        clearStudents: document.getElementById('chkClearStudents').checked,
+        resetFirebase: document.getElementById('chkResetFirebase').checked
+      };
+
+      try {
+        const result = await window.smartBusStore.resetData(options);
+
+        closeModal('modalConfirmReset');
+        btnExec.disabled = false;
+        btnExec.textContent = 'Continue Reset';
+        if (btnSpinner) btnSpinner.style.display = 'none';
+
+        // Render Summary Results
+        renderSummaryResults(result);
+
+      } catch (err) {
+        btnExec.disabled = false;
+        btnExec.textContent = 'Continue Reset';
+        if (btnSpinner) btnSpinner.style.display = 'none';
+        alert("Reset failed: " + err.message);
+      }
+    }
+
+    function renderSummaryResults(result) {
+      const summaryCard = document.getElementById('postResetSummary');
+      const checklist = document.getElementById('summaryChecklist');
+      const statusNotice = document.getElementById('firebaseStatusNotice');
+      const actionCard = document.getElementById('actionCard');
+
+      let checklistHtml = '';
+      result.clearedItems.forEach(item => {
+        checklistHtml += `
+          <div class="summary-item">
+            <span class="summary-check">✓</span>
+            <span>${item}</span>
+          </div>
+        `;
+      });
+      checklist.innerHTML = checklistHtml;
+
+      // Firebase Status Banner
+      if (result.firebaseErrors && result.firebaseErrors.length > 0) {
+        statusNotice.innerHTML = `
+          <div style="background:#fee2e2; border:1px solid #fca5a5; border-radius:var(--radius-md); padding:12px 16px; color:#991b1b;">
+            <strong>⚠️ Firebase Partial Notice:</strong> Local application data was reset, but Firebase data could not be completely reset due to network/permissions:
+            <ul style="margin-left:18px; margin-top:4px;">
+              ${result.firebaseErrors.map(e => `<li>${e}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      } else if (result.firebaseLog && result.firebaseLog.length > 0) {
+        statusNotice.innerHTML = `
+          <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:var(--radius-md); padding:10px 14px; color:#065f46; font-size:12px;">
+            <strong>☁️ Firebase Realtime Database Synced:</strong>
+            <ul style="margin-left:18px; margin-top:2px;">
+              ${result.firebaseLog.map(l => `<li>✓ ${l}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      } else {
+        statusNotice.innerHTML = '';
+      }
+
+      document.getElementById('summaryTimestamp').textContent = `Completed at ${new Date().toLocaleTimeString()} &bull; Application restored to clean baseline state`;
+      
+      summaryCard.style.display = 'block';
+      summaryCard.scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Studio — SMARTBUS &bull; GlobalRide</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  
+  <!-- Shared GlobalRide Design System -->
+  <link rel="stylesheet" href="globalride.css">
+</head>
+<body>
+
+  <div class="app-viewport">
+    
+    <!-- White Rounded Sidebar -->
+    <aside class="globalride-sidebar">
+      <a href="index.html" class="brand-wrapper">
+        <div class="brand-logo-icon">🚌</div>
+        <div class="brand-text">GLOBAL<span>RIDE</span></div>
+      </a>
+
+      <ul class="sidebar-nav">
+        <li>
+          <a class="nav-link active" onclick="switchMasterTab('driver', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">🚍</span>
+              <span>Driver Console</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchMasterTab('parent', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">👨‍👩‍👧</span>
+              <span>Parent Portal</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchMasterTab('student', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">🎓</span>
+              <span>Student App</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchMasterTab('admin', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">⚙️</span>
+              <span>Admin Telemetry</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <a href="index.html" class="nav-link" title="Landing Portal">
+          <div class="nav-link-content">
+            <span class="nav-icon">🏠</span>
+            <span>Landing Portal</span>
+          </div>
+        </a>
+        <a href="reset_data.html" class="nav-link" title="Reset / Clear System Data">
+          <div class="nav-link-content">
+            <span class="nav-icon">⚙️</span>
+            <span>Reset System</span>
+          </div>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Surface -->
+    <main class="globalride-main">
+      
+      <!-- Top Header with Role Switcher -->
+      <header class="globalride-header">
+        <div>
+          <span style="font-size:11px; font-weight:700; color:var(--primary); letter-spacing:0.5px;">UNIFIED MASTER STUDIO</span>
+          <h2 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700;" id="masterViewTitle">🚍 Driver Console View</h2>
+        </div>
+
+        <!-- Role Quick Switcher Pills -->
+        <div class="role-tabs-bar">
+          <button class="role-tab-btn active" onclick="switchMasterTab('driver', this)">🚍 Driver View</button>
+          <button class="role-tab-btn" onclick="switchMasterTab('parent', this)">👨‍👩‍👧 Parent View</button>
+          <button class="role-tab-btn" onclick="switchMasterTab('student', this)">🎓 Student View</button>
+          <button class="role-tab-btn" onclick="switchMasterTab('admin', this)">⚙️ Admin View</button>
+        </div>
+
+        <div class="header-user-group">
+          <div class="user-profile-pill">
+            <div class="user-avatar-round" id="mHeaderAvatar" style="background:#2563eb;">MB</div>
+            <div class="user-meta-text">
+              <h5 id="mHeaderTitle">Master Studio</h5>
+              <p id="mHeaderSubtitle">BUS001 &bull; Active Sync</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- TAB 1: DRIVER CONSOLE VIEW -->
+      <section id="tab-driver" class="master-tab-view" style="display:flex; flex-direction:column; gap:16px;">
+        
+        <!-- Live Scan Action Banner -->
+        <div class="live-scan-action-banner" id="masterScanBanner" style="display:none;">
+          <div class="scan-student-block">
+            <div class="scan-student-avatar" id="mScanAvatar">AP</div>
+            <div class="scan-student-details">
+              <span class="scan-meta-pill" id="mScanRfid">RFID-102938</span>
+              <h3 id="mScanName" style="margin-top:2px;">Ajay Pravin</h3>
+              <p id="mScanMeta">23CS001 &bull; Pickup: <strong>Erode Stand</strong></p>
+            </div>
+          </div>
+          <div class="scan-action-buttons">
+            <button class="btn-gr btn-gr-outline" style="color:#fff;" onclick="window.smartBusStore.dismissScan()">Dismiss</button>
+            <button class="btn-gr btn-gr-outline" style="color:#fff;" onclick="mDriverFlag()">🚩 Flag</button>
+            <button class="btn-gr btn-gr-success" onclick="mDriverConfirm()">✅ Confirm Boarding</button>
+          </div>
+        </div>
+
+        <!-- Top Metrics -->
+        <div class="gr-grid-3">
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🎫</span> Total Boardings</span>
+              <span class="gr-pill-badge gr-pill-green" id="mOccupancyRate">64% Full</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" id="mOccupancyVal">32</span>
+                <span class="gr-metric-unit">/ 50 seats</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🌐</span> Route Distance</span>
+              <span class="gr-pill-badge gr-pill-blue">Active Run</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value">16.4</span>
+                <span class="gr-metric-unit">km</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">⏱️</span> Telemetry</span>
+              <span class="gr-pill-badge gr-pill-green">42 km/h</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value">1<span style="font-size:20px;">hr</span> 24<span style="font-size:20px;">m</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passenger Roster Table -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">📋</span> Passenger Boarding Roster</span>
+            <span class="gr-pill-badge gr-pill-blue">BUS001</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="gr-table">
+              <thead>
+                <tr>
+                  <th>STUDENT</th>
+                  <th>ROLL NO</th>
+                  <th>SCHOOL STATUS</th>
+                  <th>BOARDING LOCATION</th>
+                  <th>RFID</th>
+                  <th>TRIP STATUS</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="mRosterTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: PARENT VIEW -->
+      <section id="tab-parent" class="master-tab-view" style="display:none; flex-direction:column; gap:16px;">
+        <div class="gr-card" style="background:linear-gradient(135deg, #1e293b, #0f172a); color:#fff;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span class="gr-pill-badge gr-pill-green">🟢 BOARDED & VERIFIED BY DRIVER</span>
+              <h2 style="font-size:24px; font-weight:700; margin-top:6px;" id="mParentStudentName">Ajay Pravin has boarded BUS001</h2>
+              <p style="color:#cbd5e1; font-size:13px; margin-top:2px;" id="mParentDetails">Confirmed by Driver John Peter at 07:46 AM &bull; Pickup: Erode Stand</p>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:#94a3b8;">ESTIMATED ARRIVAL</div>
+              <div style="font-size:24px; font-weight:700; color:#38bdf8;">08:45 AM</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gr-grid-3">
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">📅</span> Monthly Attendance</span>
+              <span class="gr-pill-badge gr-pill-green">98%</span>
+            </div>
+            <div class="gr-calendar-grid">
+              <div class="gr-cal-header-day">M</div><div class="gr-cal-header-day">T</div><div class="gr-cal-header-day">W</div>
+              <div class="gr-cal-header-day">T</div><div class="gr-cal-header-day">F</div><div class="gr-cal-header-day">S</div><div class="gr-cal-header-day">S</div>
+              <div class="gr-cal-cell active-green">1</div><div class="gr-cal-cell active-green">2</div><div class="gr-cal-cell active-green">3</div>
+              <div class="gr-cal-cell active-green">4</div><div class="gr-cal-cell active-blue">5</div><div class="gr-cal-cell">6</div><div class="gr-cal-cell">7</div>
+            </div>
+          </div>
+
+          <div class="gr-card" style="grid-column:span 2;">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">📜</span> Attendance Confirmation Log</span>
+            </div>
+            <table class="gr-table">
+              <thead>
+                <tr><th>DATE & TIME</th><th>BUS</th><th>PICKUP</th><th>STATUS</th><th>VERIFIED BY</th></tr>
+              </thead>
+              <tbody id="mParentLogBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: STUDENT VIEW -->
+      <section id="tab-student" class="master-tab-view" style="display:none; flex-direction:column; gap:16px;">
+        <div class="gr-grid-current-trip">
+          <div class="gr-card" style="background:#0f172a; color:#fff;">
+            <span style="font-size:10px; color:#94a3b8;">SMARTPASS NFC &bull; RFID</span>
+            <h3 style="font-size:20px; font-weight:700; margin-top:4px;">Ajay Pravin</h3>
+            <p style="font-size:12px; color:#93c5fd;">23CS001 &bull; Computer Science</p>
+            <div style="margin-top:20px;">
+              <span class="gr-pill-badge gr-pill-green">ACTIVE PASS</span>
+              <div style="font-family:'IBM Plex Mono'; font-size:12px; color:#fde047; margin-top:8px;">RFID-102938</div>
+            </div>
+          </div>
+
+          <div class="gr-card" style="grid-column:span 2;">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🔥</span> Commute Streak & History</span>
+              <span class="gr-pill-badge gr-pill-green">18 Days Streak 🔥</span>
+            </div>
+            <table class="gr-table">
+              <thead>
+                <tr><th>DATE</th><th>TIME</th><th>BUS</th><th>PICKUP STOP</th><th>STATUS</th></tr>
+              </thead>
+              <tbody id="mStudentLogBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: ADMIN VIEW -->
+      <section id="tab-admin" class="master-tab-view" style="display:none; flex-direction:column; gap:16px;">
+        <div class="gr-grid-4">
+          <div class="gr-card"><span class="gr-card-title">Active Fleet</span><div class="gr-metric-value" style="margin-top:10px;">3 Buses</div></div>
+          <div class="gr-card"><span class="gr-card-title">Registered</span><div class="gr-metric-value" style="margin-top:10px;" id="mAdminRegCount">4</div></div>
+          <div class="gr-card"><span class="gr-card-title">Boarded Today</span><div class="gr-metric-value" style="margin-top:10px;" id="mAdminBoardedCount">1</div></div>
+          <div class="gr-card"><span class="gr-card-title">Unknown Cards</span><div class="gr-metric-value" style="margin-top:10px; color:#f59e0b;" id="mAdminUnknownCount">0</div></div>
+        </div>
+      </section>
+
+      <!-- SHARED LEAFLET MAP CARD -->
+      <section class="gr-card" style="padding:16px;">
+        <div class="gr-card-header" style="margin-bottom:8px;">
+          <span class="gr-card-title"><span class="icon-glyph">🗺️</span> Real-Time GPS Route Map</span>
+          <span class="gr-pill-badge gr-pill-green" id="mGpsBadge">🟢 GPS FIX LIVE</span>
+        </div>
+        <div class="gr-map-container" style="height:260px;">
+          <div id="masterMap"></div>
+        </div>
+      </section>
+
+      <!-- SIMULATOR DOCK -->
+      <section class="simulator-dock">
+        <div class="sim-title-tag">
+          <span>⚡ RFID TAP SIMULATOR:</span>
+        </div>
+        <div class="sim-btn-group">
+          <button class="btn-sim sim-green" onclick="tapSim('RFID-102938')">🟢 Tap: Ajay Pravin</button>
+          <button class="btn-sim sim-green" onclick="tapSim('RFID-882194')">🟢 Tap: Deepa Lakshmi</button>
+          <button class="btn-sim sim-green" onclick="tapSim('RFID-554412')">🟢 Tap: Rahul Kumar</button>
+          <button class="btn-sim sim-yellow" onclick="tapSim('RFID-999999')">🟡 Tap: New Card</button>
+          <button class="btn-sim" onclick="promptMasterTap()">✏️ Custom RFID</button>
+          <button class="btn-sim" onclick="advanceMapStop()">📍 Advance Stop</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: ON-BOARD REGISTRATION -->
+  <div class="gr-modal-backdrop" id="modalReg">
+    <div class="gr-modal" style="max-width:560px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
+        <div>
+          <span class="gr-pill-badge gr-pill-orange">⚡ NEW CARD DETECTED</span>
+          <h3 style="font-family:'Space Grotesk'; font-size:19px; font-weight:700; margin-top:4px;">Register Student to RFID Card</h3>
+        </div>
+        <button onclick="closeMasterModal('modalReg')" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+      </div>
+
+      <form id="masterRegForm" onsubmit="submitMasterReg(event)">
+        <div class="reg-form-group">
+          <label>SCANNED RFID CARD UID</label>
+          <input type="text" id="mRegModalRfid" readonly class="reg-form-input" style="font-weight:700; color:var(--primary); background:#f1f5f9;">
+        </div>
+
+        <div class="reg-form-group">
+          <label>STUDENT FULL NAME *</label>
+          <input type="text" id="mRegModalName" required placeholder="e.g. Kavitha R" class="reg-form-input">
+        </div>
+
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>ROLL NO / ID *</label>
+            <input type="text" id="mRegModalRoll" required placeholder="e.g. 23EC044" class="reg-form-input" style="text-transform:uppercase;">
+          </div>
+          <div class="reg-form-group">
+            <label>ACADEMIC YEAR</label>
+            <select id="mRegModalYear" class="reg-form-select">
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3" selected>3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="reg-form-group">
+          <label>DEPARTMENT</label>
+          <select id="mRegModalDept" class="reg-form-select">
+            <option value="Computer Science">Computer Science</option>
+            <option value="Electronics & Comm">Electronics & Comm</option>
+            <option value="Mechanical Engg">Mechanical Engg</option>
+            <option value="Information Tech">Information Tech</option>
+            <option value="Artificial Intelligence & DS">Artificial Intelligence & DS</option>
+          </select>
+        </div>
+
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>STUDENT PHONE *</label>
+            <input type="tel" id="mRegModalPhone" required placeholder="+91 98765 43210" class="reg-form-input">
+          </div>
+          <div class="reg-form-group">
+            <label>PARENT PHONE *</label>
+            <input type="tel" id="mRegModalParentPhone" required placeholder="+91 94433 11223" class="reg-form-input">
+          </div>
+        </div>
+
+        <div class="reg-form-group">
+          <label>PICKUP STOP</label>
+          <select id="mRegModalPickup" class="reg-form-select">
+            <option value="Erode Stand">Erode Stand</option>
+            <option value="Perundurai Byp" selected>Perundurai Byp</option>
+            <option value="Chithode Junction">Chithode Junction</option>
+            <option value="College Campus Gate">College Campus Gate</option>
+          </select>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+          <button type="button" class="btn-gr btn-gr-outline" onclick="closeMasterModal('modalReg')">Cancel</button>
+          <button type="submit" class="btn-gr btn-gr-success">Register & Confirm Boarding</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="gr-toast-container" id="toastContainer"></div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  
+  <!-- Shared Store -->
+  <script src="shared_store.js"></script>
+
+  <script>
+    let map = null;
+    let busMarker = null;
+    let currentTab = 'driver';
+    let stopIdx = 1;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      renderMasterView();
+
+      window.smartBusStore.subscribe((eventType, payload, state) => {
+        renderMasterView();
+        if (eventType === 'UNKNOWN_CARD_DETECTED') {
+          showToast(`⚠️ Unregistered Card Tap: ${payload.rfid}`, 'warning');
+          openMasterRegModal(payload.rfid);
+        } else if (eventType === 'STUDENT_BOARDED') {
+          showToast(`🟢 1st Tap: ${payload.student.name} Boarded BUS001!`, 'success');
+        } else if (eventType === 'STUDENT_LANDED') {
+          showToast(`🏁 2nd Tap: ${payload.student.name} Safely Landed / Dropped Off!`, 'success');
+        } else if (eventType === 'STUDENT_REGISTERED') {
+          showToast(`🎉 Registered & Boarded: ${payload.student.name}`, 'success');
+        }
+      });
+    });
+
+    function initMap() {
+      const state = window.smartBusStore.getState();
+      map = L.map('masterMap', { zoomControl: true }).setView([state.busData.lat, state.busData.lng], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+      const busIcon = L.divIcon({
+        className: 'custom-bus-icon',
+        html: '<div style="background:#2563eb; color:#fff; border:3px solid #fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:18px;">🚍</div>',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      busMarker = L.marker([state.busData.lat, state.busData.lng], { icon: busIcon }).addTo(map);
+      const routeCoords = state.routeStops.map(s => [s.lat, s.lng]);
+      L.polyline(routeCoords, { color: '#2563eb', weight: 4, opacity: 0.8, dashArray: '6, 6' }).addTo(map);
+    }
+
+    function switchMasterTab(tab, btn) {
+      currentTab = tab;
+      document.querySelectorAll('.master-tab-view').forEach(t => t.style.display = 'none');
+      document.getElementById(`tab-${tab}`).style.display = 'flex';
+
+      document.querySelectorAll('.role-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const titles = {
+        driver: '🚍 Driver Console View',
+        parent: '👨‍👩‍👧 Parent Portal View',
+        student: '🎓 Student App View',
+        admin: '⚙️ Transport Admin Telemetry'
+      };
+      document.getElementById('masterViewTitle').textContent = titles[tab];
+
+      if (map) setTimeout(() => map.invalidateSize(), 200);
+      renderMasterView();
+    }
+
+    function renderMasterView() {
+      const state = window.smartBusStore.getState();
+
+      // Dynamic Driver & Bus Header Sync
+      const authDriver = window.smartBusStore.getAuthenticatedDriver();
+      const mAvatar = document.getElementById('mHeaderAvatar');
+      const mTitle = document.getElementById('mHeaderTitle');
+      const mSub = document.getElementById('mHeaderSubtitle');
+      if (mAvatar && mTitle && mSub) {
+        if (authDriver) {
+          mAvatar.textContent = authDriver.avatar || 'DR';
+          mAvatar.style.background = authDriver.avatar_color || '#2563eb';
+          mTitle.textContent = authDriver.name;
+          mSub.innerHTML = `${authDriver.bus_id} &bull; Driver Active`;
+        } else {
+          mAvatar.textContent = 'MB';
+          mAvatar.style.background = '#2563eb';
+          mTitle.textContent = 'Master Studio';
+          mSub.innerHTML = `${state.busId || 'BUS001'} &bull; Active Sync`;
+        }
+      }
+
+      // Driver View updates
+      document.getElementById('mOccupancyVal').textContent = state.busData.occupancy;
+      document.getElementById('mOccupancyRate').textContent = `${Math.round((state.busData.occupancy / state.busData.max_seats) * 100)}% Occupied`;
+
+      const banner = document.getElementById('masterScanBanner');
+      const lastScan = state.lastScan;
+      if (lastScan && lastScan.student) {
+        banner.style.display = 'flex';
+        const s = lastScan.student;
+        const isLanded = lastScan.action === 'LANDED';
+        document.getElementById('mScanAvatar').textContent = s.avatar || 'ST';
+        document.getElementById('mScanAvatar').style.background = isLanded ? '#7e22ce' : (s.avatar_color || '#2563eb');
+        document.getElementById('mScanRfid').textContent = lastScan.rfid;
+        document.getElementById('mScanName').textContent = `${s.name} (${isLanded ? '🏁 Landed' : '🟢 Boarded'})`;
+        document.getElementById('mScanMeta').innerHTML = `${s.student_id} &bull; Stop: <strong>${lastScan.stop || s.pickup_point}</strong> &bull; Time: <strong>${lastScan.timestamp}</strong>`;
+      } else {
+        banner.style.display = 'none';
+      }
+
+      // Roster Table
+      const rBody = document.getElementById('mRosterTableBody');
+      rBody.innerHTML = state.students.map(s => {
+        const isBoarded = s.status === 'Boarded';
+        const isLanded = s.status === 'Landed';
+        const enrollStatus = s.enrollment_status || 'Active';
+        const isCompleted = enrollStatus === 'Completed';
+        const isDiscontinued = enrollStatus === 'Discontinued';
+        const badgeClass = isCompleted ? 'gr-pill-completed' : isDiscontinued ? 'gr-pill-discontinued' : 'gr-pill-green';
+        const badgeText = isCompleted ? '🎓 Completed' : isDiscontinued ? '🚫 Discontinued' : '🟢 Active';
+
+        const coords = (typeof s.pickup_lat === 'number' && typeof s.pickup_lng === 'number') 
+          ? `(${s.pickup_lat.toFixed(3)}, ${s.pickup_lng.toFixed(3)})` 
+          : '';
+
+        return `
+          <tr>
+            <td>
+              <strong>${s.name}</strong>
+              <div style="font-size:10px; color:var(--text-muted);">${s.department}</div>
+            </td>
+            <td style="font-family:'IBM Plex Mono'; font-weight:600;">${s.student_id}</td>
+            <td><span class="gr-pill-badge ${badgeClass}" style="font-size:10px; padding:2px 6px;">${badgeText}</span></td>
+            <td>
+              <div><strong>📍 ${s.pickup_point}</strong></div>
+              <div style="font-size:10px; color:var(--text-muted); font-family:'IBM Plex Mono';">${coords}</div>
+            </td>
+            <td><span style="font-family:'IBM Plex Mono'; font-size:11px;">${s.rfid}</span></td>
+            <td>
+              <span class="gr-pill-badge ${isBoarded ? 'gr-pill-green' : isLanded ? 'gr-pill-purple' : 'gr-pill-orange'}">
+                ${isBoarded ? '🟢 Boarded' : isLanded ? '🏁 Landed' : '○ Waiting'}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="btn-gr btn-gr-outline" style="font-size:10px; padding:3px 8px;" onclick="tapSim('${s.rfid}')">
+                  ${isBoarded ? '🏁 Land' : '🟢 Board'}
+                </button>
+                <a href="driver_dashboard.html" class="btn-gr btn-gr-outline" style="font-size:10px; padding:3px 6px; text-decoration:none;" title="Open Driver Console to Edit">
+                  ✏️
+                </a>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Parent View updates
+      const pBody = document.getElementById('mParentLogBody');
+      pBody.innerHTML = state.attendanceLogs.map(l => {
+        const isLanded = l.status && l.status.includes('Landed');
+        return `
+          <tr>
+            <td>${l.date} &bull; ${l.timestamp}</td>
+            <td><strong>${l.bus_id}</strong></td>
+            <td>${l.pickup}</td>
+            <td>
+              <span class="gr-pill-badge ${isLanded ? 'gr-pill-purple' : 'gr-pill-green'}">
+                ${isLanded ? '🏁 ' + l.status : '🟢 ' + l.status}
+              </span>
+            </td>
+            <td>${l.confirmedBy}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Student View updates
+      const sBody = document.getElementById('mStudentLogBody');
+      sBody.innerHTML = state.attendanceLogs.map(l => {
+        const isLanded = l.status && l.status.includes('Landed');
+        return `
+          <tr>
+            <td>${l.date}</td>
+            <td>${l.timestamp}</td>
+            <td>${l.bus_id}</td>
+            <td>${l.pickup}</td>
+            <td>
+              <span class="gr-pill-badge ${isLanded ? 'gr-pill-purple' : 'gr-pill-green'}">
+                ${isLanded ? '🏁 ' + l.status : '🟢 ' + l.status}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Admin stats
+      document.getElementById('mAdminRegCount').textContent = state.students.length;
+      document.getElementById('mAdminBoardedCount').textContent = state.students.filter(s => s.status === 'Boarded').length;
+      document.getElementById('mAdminUnknownCount').textContent = state.unknownCards.length;
+
+      // Update Map Marker
+      if (map && busMarker) {
+        busMarker.setLatLng([state.busData.lat, state.busData.lng]);
+      }
+    }
+
+    function mDriverConfirm() {
+      const state = window.smartBusStore.getState();
+      if (state.pendingScans && state.pendingScans.length > 0) {
+        const s = state.pendingScans[0];
+        window.smartBusStore.confirmBoarding(s.scanId, s.rfid);
+      }
+    }
+
+    function mDriverFlag() {
+      const state = window.smartBusStore.getState();
+      if (state.pendingScans && state.pendingScans.length > 0) {
+        const s = state.pendingScans[0];
+        window.smartBusStore.flagBoarding(s.scanId, s.rfid, "Manual Flag");
+      }
+    }
+
+    function tapSim(rfid) {
+      window.smartBusStore.handleIncomingScan(rfid);
+    }
+
+    function promptMasterTap() {
+      const rfid = prompt("Enter RFID UID to scan:", "RFID-339900");
+      if (rfid) window.smartBusStore.handleIncomingScan(rfid);
+    }
+
+    function advanceMapStop() {
+      stopIdx = (stopIdx + 1) % 4;
+      window.smartBusStore.advanceRoute(stopIdx);
+    }
+
+    function openMasterRegModal(rfid) {
+      document.getElementById('mRegModalRfid').value = rfid || 'RFID-999999';
+      document.getElementById('modalReg').classList.add('active');
+    }
+
+    function closeMasterModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function submitMasterReg(e) {
+      e.preventDefault();
+      const rfid = document.getElementById('mRegModalRfid').value;
+      const name = document.getElementById('mRegModalName').value;
+      const roll = document.getElementById('mRegModalRoll').value;
+      const year = document.getElementById('mRegModalYear').value;
+      const dept = document.getElementById('mRegModalDept').value;
+      const phone = document.getElementById('mRegModalPhone').value;
+      const parentPhone = document.getElementById('mRegModalParentPhone').value;
+      const pickup = document.getElementById('mRegModalPickup').value;
+
+      window.smartBusStore.registerNewStudent({
+        rfid, name, student_id: roll, year, department: dept, phone, parent_phone: parentPhone, pickup_point: pickup
+      });
+
+      closeMasterModal('modalReg');
+      document.getElementById('masterRegForm').reset();
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `gr-toast ${type}`;
+      toast.innerHTML = `<span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>

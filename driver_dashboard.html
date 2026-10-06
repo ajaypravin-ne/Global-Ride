@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driver Console — SMARTBUS &bull; GlobalRide</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  
+  <!-- Shared GlobalRide Design System -->
+  <link rel="stylesheet" href="globalride.css">
+</head>
+<body>
+
+  <div class="app-viewport">
+    
+    <!-- White Rounded Sidebar (GlobalRide Style) -->
+    <aside class="globalride-sidebar">
+      <a href="index.html" class="brand-wrapper">
+        <div class="brand-logo-icon">🚍</div>
+        <div class="brand-text">GLOBAL<span>RIDE</span></div>
+      </a>
+
+      <ul class="sidebar-nav">
+        <li>
+          <a class="nav-link active" onclick="switchNav('dashboard', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">📊</span>
+              <span>Dashboard</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchNav('roster', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">👥</span>
+              <span>Student Roster</span>
+            </div>
+            <span class="nav-badge" id="sidebarRosterCount">4</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchNav('scans', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">📡</span>
+              <span>Live Scans</span>
+            </div>
+            <span class="nav-badge" id="sidebarScanBadge" style="background:#ef4444; color:#fff; display:none;">NEW</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchNav('unknown', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">⚠️</span>
+              <span>Unknown Cards</span>
+            </div>
+            <span class="nav-badge" id="sidebarUnknownCount" style="background:#fef3c7; color:#b45309;">0</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchNav('vehicle', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">🚌</span>
+              <span>Vehicle & GPS</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="triggerSOSModal()" style="color:#ef4444;">
+            <div class="nav-link-content">
+              <span class="nav-icon">🆘</span>
+              <span>Emergency SOS</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <a href="index.html" class="nav-link" title="Portal Hub">
+          <div class="nav-link-content">
+            <span class="nav-icon">🔄</span>
+            <span>Switch Role Portal</span>
+          </div>
+        </a>
+        <a href="reset_data.html" class="nav-link" title="Reset / Clear System Data">
+          <div class="nav-link-content">
+            <span class="nav-icon">⚙️</span>
+            <span>Reset System</span>
+          </div>
+        </a>
+        <a href="javascript:void(0)" onclick="handleDriverLogout()" class="nav-link" style="color:#ef4444;" title="Sign out of Driver Console">
+          <div class="nav-link-content">
+            <span class="nav-icon">🚪</span>
+            <span>Logout Driver</span>
+          </div>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Surface -->
+    <main class="globalride-main">
+      
+      <!-- Top Header -->
+      <header class="globalride-header">
+        <div class="search-bar-pill">
+          <span style="color:var(--text-subtle);">🔍</span>
+          <input type="text" id="rosterSearchInput" placeholder="Search student name, roll no, or pickup stop..." oninput="handleRosterSearch()">
+        </div>
+
+        <!-- Role Quick Switcher Pills -->
+        <div class="role-tabs-bar">
+          <a href="driver_dashboard.html" class="role-tab-btn active">🚍 Driver Console</a>
+          <a href="parent_dashboard.html" class="role-tab-btn">👨‍👩‍👧 Parent Portal</a>
+          <a href="student_dashboard.html" class="role-tab-btn">🎓 Student App</a>
+        </div>
+
+        <div class="header-user-group">
+          <button class="icon-btn-circle" onclick="toggleAutoConfirm()" id="autoConfirmBtn" title="Toggle Auto-Confirm scans">
+            <span>⚡</span>
+          </button>
+          
+          <div class="user-profile-pill" onclick="toggleDriverProfileMenu()" id="headerDriverPill" title="Driver Profile & Options" style="position:relative; user-select:none;">
+            <div class="user-avatar-round" id="headerDriverAvatar" style="background:#2563eb;">DR</div>
+            <div class="user-meta-text">
+              <h5 id="headerDriverName">Driver Console</h5>
+              <p id="headerDriverMeta">Driver &bull; Active</p>
+            </div>
+            <span style="color:var(--text-muted); font-size:10px;">▼</span>
+
+            <!-- Dropdown Menu -->
+            <div id="driverProfileDropdown" style="display:none; position:absolute; top:calc(100% + 8px); right:0; background:#ffffff; border:1px solid var(--border-subtle); border-radius:var(--radius-lg); box-shadow:0 12px 30px rgba(15,23,42,0.15); width:250px; padding:14px; z-index:150; cursor:default;" onclick="event.stopPropagation();">
+              <div style="display:flex; align-items:center; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--border-subtle); margin-bottom:10px;">
+                <div class="user-avatar-round" id="dropDriverAvatar" style="background:#2563eb; width:36px; height:36px; font-size:13px;">DR</div>
+                <div style="overflow:hidden;">
+                  <div style="font-weight:700; font-size:13px; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="dropDriverName">Driver Name</div>
+                  <div style="font-size:11px; font-family:'IBM Plex Mono'; color:var(--text-muted);" id="dropDriverId">ID: DRV001</div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--text-body); margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-muted);">Assigned Bus:</span>
+                  <strong id="dropDriverBus" style="font-family:'IBM Plex Mono'; color:var(--primary);">BUS001</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-muted);">License:</span>
+                  <span style="font-family:'IBM Plex Mono'; font-size:11px;" id="dropDriverLicense">N/A</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-muted);">Phone:</span>
+                  <span id="dropDriverPhone">N/A</span>
+                </div>
+              </div>
+              <a href="reset_data.html" class="btn-gr btn-gr-outline" style="width:100%; font-size:12px; padding:6px 12px; color:#475569; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:6px; text-decoration:none;">
+                <span>⚙️</span> Reset System Data
+              </a>
+              <button type="button" class="btn-gr btn-gr-outline" style="width:100%; font-size:12px; padding:7px 12px; color:#ef4444; border-color:#fca5a5; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="handleDriverLogout()">
+                <span>🚪</span> Logout Driver
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==========================================================================
+           LIVE RFID SCANNER COCKPIT & CARD STATUS PANEL
+           ========================================================================== -->
+      <section class="rfid-scanner-cockpit" id="rfidScannerCockpit">
+        <div class="scanner-top-bar">
+          <div class="scanner-beacon-group">
+            <div class="scanner-beacon-dot online" id="scannerBeaconDot"></div>
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <h4 style="font-family:'Space Grotesk'; font-size:15px; font-weight:700; color:var(--text-main); margin:0;">
+                  ESP32 RFID SCANNER &bull; REAL-TIME DETECTOR
+                </h4>
+                <span class="gr-pill-badge gr-pill-green" id="scannerConnBadge">🟢 LIVE CLOUD SYNC</span>
+              </div>
+              <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                Listening for RC522 card taps via Firebase RTDB (<span id="headerFirebasePath" style="font-family:'IBM Plex Mono'; font-size:11px;">/bus/BUS001</span>)
+              </p>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:12px; color:var(--text-muted);">Last Activity: <strong id="lastScanTimestampLabel" style="font-family:'IBM Plex Mono'; color:var(--text-main);">Listening...</strong></span>
+            <button class="btn-gr btn-gr-outline" style="font-size:12px; padding:6px 14px;" onclick="promptCustomTap()">
+              ✏️ Scan / Input RFID
+            </button>
+          </div>
+        </div>
+
+        <!-- DYNAMIC SCAN STATUS BOX (Changes based on whether card is scanned, registered, or new) -->
+        <div id="dynamicScanContainer">
+          <!-- Populated by renderScanCockpit() in JS -->
+        </div>
+      </section>
+
+      <!-- TOP METRICS CARDS ROW (GlobalRide Style) -->
+      <section class="gr-grid-3">
+        <!-- Metric 1: Total Boardings -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">🎫</span> Total Boardings</span>
+            <span class="gr-pill-badge gr-pill-green" id="metricOccupancyRate">+12 today</span>
+          </div>
+          <div class="gr-metric-row">
+            <div>
+              <span class="gr-metric-value" id="metricTotalBoarded">32</span>
+              <span class="gr-metric-unit">/ 50 seats</span>
+            </div>
+            <!-- Mini Bar Graphic -->
+            <svg width="72" height="34" viewBox="0 0 72 34" fill="none">
+              <rect x="4" y="16" width="6" height="18" rx="3" fill="#93c5fd"/>
+              <rect x="16" y="10" width="6" height="24" rx="3" fill="#2563eb"/>
+              <rect x="28" y="4" width="6" height="30" rx="3" fill="#10b981"/>
+              <rect x="40" y="14" width="6" height="20" rx="3" fill="#93c5fd"/>
+              <rect x="52" y="8" width="6" height="26" rx="3" fill="#2563eb"/>
+              <rect x="64" y="2" width="6" height="32" rx="3" fill="#34d399"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Metric 2: Route Distance -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">🌐</span> Route Distance</span>
+            <span class="gr-pill-badge gr-pill-blue">Active Run</span>
+          </div>
+          <div class="gr-metric-row">
+            <div>
+              <span class="gr-metric-value" id="metricDistance">16.4</span>
+              <span class="gr-metric-unit">km</span>
+            </div>
+            <!-- Mini Lollipop Graphic -->
+            <svg width="72" height="34" viewBox="0 0 72 34" fill="none">
+              <path d="M6 24C18 10 36 28 66 8" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="6" cy="24" r="3.5" fill="#3b82f6"/>
+              <circle cx="36" cy="19" r="3.5" fill="#10b981"/>
+              <circle cx="66" cy="8" r="4.5" fill="#2563eb" stroke="#fff" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Metric 3: Driving Hours & Speed -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">⏱️</span> Driving Telemetry</span>
+            <span class="gr-pill-badge gr-pill-green" id="metricSpeedBadge">42 km/h</span>
+          </div>
+          <div class="gr-metric-row">
+            <div>
+              <span class="gr-metric-value" id="metricHours">1<span style="font-size:20px;">hr</span> 24<span style="font-size:20px;">m</span></span>
+            </div>
+            <!-- Segmented Donut SVG -->
+            <svg width="40" height="40" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="14" fill="none" stroke="#e2e8f0" stroke-width="6"/>
+              <circle cx="20" cy="20" r="14" fill="none" stroke="#10b981" stroke-width="6" stroke-dasharray="60 30" stroke-dashoffset="15"/>
+              <circle cx="20" cy="20" r="14" fill="none" stroke="#2563eb" stroke-width="6" stroke-dasharray="25 65" stroke-dashoffset="-45"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- MIDDLE ROW: CALENDAR, CURRENT TRIP ROUTE, LIVE MAP -->
+      <section class="gr-grid-current-trip">
+        
+        <!-- Widget 1: Attendance Schedule Mini Calendar -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">📅</span> Trip Schedule</span>
+            <a href="#" class="gr-arrow-link">↗</a>
+          </div>
+          <div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:4px;">
+            September 2026
+          </div>
+          <div class="gr-calendar-grid">
+            <div class="gr-cal-header-day">M</div>
+            <div class="gr-cal-header-day">T</div>
+            <div class="gr-cal-header-day">W</div>
+            <div class="gr-cal-header-day">T</div>
+            <div class="gr-cal-header-day">F</div>
+            <div class="gr-cal-header-day">S</div>
+            <div class="gr-cal-header-day">S</div>
+
+            <div class="gr-cal-cell active-blue">1</div>
+            <div class="gr-cal-cell active-green">2</div>
+            <div class="gr-cal-cell active-light-blue">3</div>
+            <div class="gr-cal-cell">4</div>
+            <div class="gr-cal-cell active-green">5</div>
+            <div class="gr-cal-cell">6</div>
+            <div class="gr-cal-cell">7</div>
+            <div class="gr-cal-cell active-blue">8</div>
+            <div class="gr-cal-cell active-blue">9</div>
+            <div class="gr-cal-cell active-green">10</div>
+            <div class="gr-cal-cell">11</div>
+            <div class="gr-cal-cell active-light-blue">12</div>
+            <div class="gr-cal-cell">13</div>
+            <div class="gr-cal-cell">14</div>
+          </div>
+          
+          <div style="margin-top:auto; padding-top:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="font-size:11px; color:var(--text-muted);">Route Rating</span>
+              <div style="font-size:16px; font-weight:800; color:var(--text-main);">4.9 ★</div>
+            </div>
+            <span class="gr-pill-badge gr-pill-green">On Schedule</span>
+          </div>
+        </div>
+
+        <!-- Widget 2: Current Trip Route Timeline -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">📍</span> Current Trip Timeline</span>
+            <span class="gr-pill-badge gr-pill-blue" id="routeCurrentBadge">Perundurai Byp</span>
+          </div>
+
+          <div class="gr-timeline" id="driverTimeline">
+            <!-- Step 1 -->
+            <div class="gr-timeline-step start">
+              <div class="gr-step-dot"></div>
+              <div class="gr-step-info">
+                <h6>DEPARTURE</h6>
+                <p>Erode Bus Stand</p>
+              </div>
+              <span class="gr-step-time">07:45 AM</span>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="gr-timeline-step stop">
+              <div class="gr-step-dot" style="background:#2563eb; border-color:#2563eb;"></div>
+              <div class="gr-step-info">
+                <h6>CURRENT STOP</h6>
+                <p>Perundurai Byp</p>
+              </div>
+              <span class="gr-step-time">08:10 AM</span>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="gr-timeline-step stop">
+              <div class="gr-step-dot"></div>
+              <div class="gr-step-info">
+                <h6>NEXT STOP</h6>
+                <p>Chithode Junction</p>
+              </div>
+              <span class="gr-step-time">08:25 AM</span>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="gr-timeline-step end">
+              <div class="gr-step-dot"></div>
+              <div class="gr-step-info">
+                <h6>FINAL ARRIVAL</h6>
+                <p>College Campus Gate</p>
+              </div>
+              <span class="gr-step-time">08:45 AM</span>
+            </div>
+          </div>
+
+          <div class="gr-duration-pill">
+            <span>⏱️ Remaining ETA: <strong id="tripEtaLabel">12 mins</strong> (4.2 km)</span>
+          </div>
+        </div>
+
+        <!-- Widget 3: Interactive Leaflet Map -->
+        <div class="gr-card" style="padding:16px;">
+          <div class="gr-card-header" style="margin-bottom:8px;">
+            <span class="gr-card-title"><span class="icon-glyph">🗺️</span> Live Bus Location</span>
+            <div style="display:flex; gap:6px;">
+              <span class="gr-pill-badge gr-pill-green" id="driverGpsBadge">🟢 GPS FIX</span>
+            </div>
+          </div>
+          <div class="gr-map-container">
+            <div id="liveMap"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:12px; color:var(--text-muted);">
+            <span>Coordinates: <strong id="mapCoordLabel" style="font-family:'IBM Plex Mono';">11.3410, 77.7170</strong></span>
+            <button class="btn-sim" onclick="recenterMap()">🎯 Recenter</button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ROW: PASSENGER ROSTER TABLE & LIVE SCAN ACTIVITY FEED -->
+      <section class="gr-grid-schedule-vehicle">
+        
+        <!-- Table 1: Student Passenger Roster & Boarding Verification -->
+        <div class="gr-card">
+          <div class="gr-card-header" style="flex-wrap:wrap; gap:12px;">
+            <div>
+              <span class="gr-card-title"><span class="icon-glyph">📋</span> Passenger Boarding Roster & Student Profiles</span>
+              <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                Driver permissions: edit student names for completed/discontinued students, reassign RFID passes, & customize boarding GPS points on map
+              </p>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn-sim active" onclick="filterRoster('all', this)">All</button>
+              <button class="btn-sim" onclick="filterRoster('active', this)">🟢 Active</button>
+              <button class="btn-sim" onclick="filterRoster('completed', this)">🎓 Completed</button>
+              <button class="btn-sim" onclick="filterRoster('discontinued', this)">🚫 Discontinued</button>
+              <button class="btn-sim" onclick="filterRoster('boarded', this)">On Bus</button>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="gr-table">
+              <thead>
+                <tr>
+                  <th>STUDENT</th>
+                  <th>ROLL NO</th>
+                  <th>SCHOOL STATUS</th>
+                  <th>BOARDING LOCATION</th>
+                  <th>RFID TAG</th>
+                  <th>TRIP STATUS</th>
+                  <th style="text-align:right;">DRIVER ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="rosterTableBody">
+                <!-- Dynamically populated via shared_store.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Table 2: Live RFID Scan Activity Log -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <div>
+              <span class="gr-card-title"><span class="icon-glyph">📡</span> Live RFID Scan History</span>
+              <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Real-time feed of all card taps</p>
+            </div>
+            <span class="gr-pill-badge gr-pill-blue" id="scanHistoryCountBadge">0 Taps</span>
+          </div>
+
+          <div style="overflow-x:auto; max-height:340px; overflow-y:auto;">
+            <table class="gr-table">
+              <thead>
+                <tr>
+                  <th>TIME</th>
+                  <th>RFID UID</th>
+                  <th>CARD STATUS</th>
+                  <th>STUDENT / DETAILS</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="scanHistoryTableBody">
+                <!-- Dynamically populated via shared_store.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- FLOATING HARDWARE & RFID TEST SIMULATOR DOCK -->
+      <section class="simulator-dock">
+        <div class="sim-title-tag">
+          <span>⚡ ESP32 RFID TAP SIMULATOR:</span>
+        </div>
+        <div class="sim-btn-group">
+          <button class="btn-sim sim-green" onclick="testCardTap('RFID-102938')" title="1st tap: Board / 2nd tap: Land">🟢 Tap: Ajay Pravin (23CS001)</button>
+          <button class="btn-sim sim-green" onclick="testCardTap('RFID-882194')" title="1st tap: Board / 2nd tap: Land">🟢 Tap: Deepa Lakshmi (23EC015)</button>
+          <button class="btn-sim sim-green" onclick="testCardTap('RFID-554412')" title="1st tap: Board / 2nd tap: Land">🟢 Tap: Rahul Kumar (23ME032)</button>
+          <button class="btn-sim sim-green" onclick="testCardTap('RFID-771122')" title="1st tap: Board / 2nd tap: Land">🟢 Tap: Sneha Patel (23IT009)</button>
+          <button class="btn-sim sim-yellow" onclick="testCardTap('RFID-999999')" title="Tap New Unregistered Card">🟡 New Card: RFID-999999</button>
+          <button class="btn-sim sim-yellow" onclick="testCardTap('RFID-NEW-01')" title="Tap New Unregistered Card">🟡 New Card: RFID-NEW-01</button>
+          <button class="btn-sim" onclick="promptCustomTap()">✏️ Custom RFID</button>
+          <button class="btn-sim" onclick="testNextStop()">📍 Advance Stop</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: EDIT STUDENT PROFILE & SCHOOL STATUS -->
+  <div class="gr-modal-backdrop" id="modalEditStudent">
+    <div class="gr-modal gr-modal-lg">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="gr-pill-badge gr-pill-blue">✏️ DRIVER PERMISSION ACCESS</span>
+            <span style="font-size:11px; font-weight:700; color:var(--text-muted);">STUDENT PROFILE & ENROLLMENT STATUS</span>
+          </div>
+          <h3 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700; margin-top:6px;" id="editModalTitle">
+            Edit Student Details & School Status
+          </h3>
+          <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+            Driver can update student names if completed school or discontinued, change school enrollment status, or reassign the RFID pass.
+          </p>
+        </div>
+        <button onclick="closeModal('modalEditStudent')" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+      </div>
+
+      <form id="driverEditStudentForm" onsubmit="submitEditStudent(event)">
+        <input type="hidden" id="editModalOriginalRfid">
+
+        <!-- Scanned RFID & Enrollment Status -->
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>RFID PASS UID</label>
+            <input type="text" id="editModalRfid" readonly class="reg-form-input" style="font-weight:700; color:var(--primary); font-family:'IBM Plex Mono';">
+          </div>
+          <div class="reg-form-group">
+            <label>SCHOOL / ENROLLMENT STATUS *</label>
+            <select id="editModalEnrollmentStatus" class="reg-form-select" onchange="onEnrollmentStatusChange()" style="font-weight:600;">
+              <option value="Active">🟢 Active (Currently Enrolled)</option>
+              <option value="Completed">🎓 Completed School / Graduated</option>
+              <option value="Discontinued">🚫 Discontinued Studies</option>
+              <option value="Transferred">🔄 Transferred Campus</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dynamic Notice for Completed / Discontinued -->
+        <div class="gr-notice-box warning" id="completedStatusNotice" style="display:none;">
+          <div style="font-size:18px;">💡</div>
+          <div>
+            <strong>Student Finished School or Discontinued:</strong>
+            <p style="margin:2px 0 6px 0; font-size:11px;">
+              You have set this student as Completed / Discontinued. You can either keep this record archived or <strong>edit the Student Name below</strong> to reassign this active RFID pass to a new incoming student!
+            </p>
+            <button type="button" class="btn-gr btn-gr-primary" style="font-size:11px; padding:4px 10px; background:#b45309; border:none;" onclick="prepareReassignStudent()">
+              🔄 Reassign Pass to New Student (Clear Fields)
+            </button>
+          </div>
+        </div>
+
+        <!-- Full Name & Roll Number -->
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>STUDENT FULL NAME *</label>
+            <input type="text" id="editModalName" required placeholder="e.g. Ajay Pravin" class="reg-form-input">
+          </div>
+          <div class="reg-form-group">
+            <label>STUDENT ROLL NO / ID *</label>
+            <input type="text" id="editModalRoll" required placeholder="e.g. 23CS001" class="reg-form-input" style="text-transform:uppercase;">
+          </div>
+        </div>
+
+        <!-- Department & Academic Year -->
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>DEPARTMENT / COURSE</label>
+            <select id="editModalDept" class="reg-form-select">
+              <option value="Computer Science">Computer Science & Engineering</option>
+              <option value="Electronics & Comm">Electronics & Communication</option>
+              <option value="Mechanical Engg">Mechanical Engineering</option>
+              <option value="Information Tech">Information Technology</option>
+              <option value="Electrical & Electronics">Electrical & Electronics</option>
+              <option value="Artificial Intelligence & DS">Artificial Intelligence & DS</option>
+              <option value="Civil Engineering">Civil Engineering</option>
+            </select>
+          </div>
+          <div class="reg-form-group">
+            <label>ACADEMIC YEAR</label>
+            <select id="editModalYear" class="reg-form-select">
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+              <option value="Alumni">Completed / Alumni</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Phone Numbers Grid -->
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>STUDENT PHONE</label>
+            <input type="tel" id="editModalPhone" placeholder="+91 98765 43210" class="reg-form-input">
+          </div>
+          <div class="reg-form-group">
+            <label>PARENT / GUARDIAN PHONE</label>
+            <input type="tel" id="editModalParentPhone" placeholder="+91 94433 11223" class="reg-form-input">
+          </div>
+        </div>
+
+        <!-- Boarding Point & Status Reason -->
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>DESIGNATED BOARDING STOP</label>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="editModalPickup" class="reg-form-input" placeholder="e.g. Perundurai Byp">
+              <button type="button" class="btn-gr btn-gr-outline" style="white-space:nowrap; font-size:12px;" onclick="openBoardingMapFromEditModal()">
+                🗺️ Pin on Map
+              </button>
+            </div>
+          </div>
+          <div class="reg-form-group">
+            <label>STATUS CHANGE / REASON NOTES</label>
+            <input type="text" id="editModalReason" placeholder="e.g. Graduated Class of 2026 / Left College" class="reg-form-input">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border-subtle); padding-top:16px;">
+          <button type="button" class="btn-gr btn-gr-danger" style="font-size:12px;" onclick="deleteStudentPrompt()">
+            🗑️ Delete Student
+          </button>
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn-gr btn-gr-outline" onclick="closeModal('modalEditStudent')">Cancel</button>
+            <button type="submit" class="btn-gr btn-gr-success" style="font-size:14px; padding:9px 22px;">
+              💾 Save Student Details
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT STUDENT BOARDING LOCATION ON MAP -->
+  <div class="gr-modal-backdrop" id="modalEditBoardingMap">
+    <div class="gr-modal gr-modal-lg">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="gr-pill-badge gr-pill-green">🗺️ INTERACTIVE MAP PICKER</span>
+            <span style="font-size:11px; font-weight:700; color:var(--primary);" id="boardingMapStudentHeader">STUDENT BOARDING POINT</span>
+          </div>
+          <h3 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700; margin-top:4px;">
+            Edit Student Boarding Location on Map
+          </h3>
+          <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+            Drag the pin or click anywhere along the bus route to pinpoint where this student boards the bus.
+          </p>
+        </div>
+        <button onclick="closeModal('modalEditBoardingMap')" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+      </div>
+
+      <!-- Quick Stop Preset Chips & Bus Location -->
+      <div style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+        <span style="font-size:11px; font-weight:700; color:var(--text-muted);">PRESET STOPS:</span>
+        <button type="button" class="stop-preset-chip" onclick="setBoardingPreset('Erode Stand', 11.341000, 77.717000)">📍 Erode Stand</button>
+        <button type="button" class="stop-preset-chip" onclick="setBoardingPreset('Perundurai Byp', 11.278000, 77.585000)">📍 Perundurai Byp</button>
+        <button type="button" class="stop-preset-chip" onclick="setBoardingPreset('Chithode Junction', 11.378000, 77.675000)">📍 Chithode Junction</button>
+        <button type="button" class="stop-preset-chip" onclick="setBoardingPreset('College Campus Gate', 11.274000, 77.607000)">📍 College Campus Gate</button>
+        <button type="button" class="stop-preset-chip" style="background:#eff6ff; color:#2563eb; border-color:#bfdbfe;" onclick="setBoardingToCurrentBusLocation()">🚍 Use Current Bus GPS</button>
+      </div>
+
+      <!-- Leaflet Map Container for Picker -->
+      <div class="gr-map-picker-box">
+        <div id="modalBoardingMap" style="width:100%; height:100%;"></div>
+      </div>
+
+      <form id="driverEditBoardingForm" onsubmit="submitEditBoardingMap(event)">
+        <input type="hidden" id="mapModalRfid">
+
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>BOARDING STOP / PICKUP POINT NAME *</label>
+            <input type="text" id="mapModalStopName" required placeholder="e.g. Perundurai Bypass Flyover" class="reg-form-input">
+          </div>
+          <div class="reg-form-group">
+            <label>GPS COORDINATES (LATITUDE, LONGITUDE)</label>
+            <div style="display:flex; gap:6px;">
+              <input type="number" step="0.000001" id="mapModalLat" required class="reg-form-input" placeholder="Latitude">
+              <input type="number" step="0.000001" id="mapModalLng" required class="reg-form-input" placeholder="Longitude">
+            </div>
+          </div>
+        </div>
+
+        <div class="reg-form-group" style="margin-bottom:12px;">
+          <label>DRIVER LANDMARK NOTES / SPECIAL PICKUP INSTRUCTIONS (OPTIONAL)</label>
+          <input type="text" id="mapModalNotes" placeholder="e.g. Near Tea Stall, opposite to Petrol Bunk under shelter" class="reg-form-input">
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-subtle); padding-top:14px;">
+          <span style="font-size:12px; color:var(--text-muted);">
+            💡 Tip: Click anywhere on map to reposition the pin.
+          </span>
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn-gr btn-gr-outline" onclick="closeModal('modalEditBoardingMap')">Cancel</button>
+            <button type="submit" class="btn-gr btn-gr-success" style="font-size:14px; padding:9px 22px;">
+              💾 Save Boarding Location
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ON-BOARD STUDENT REGISTRATION FOR NEW RFID CARDS -->
+  <div class="gr-modal-backdrop" id="modalReg">
+    <div class="gr-modal gr-modal-lg">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; border-bottom:1px solid var(--border-subtle); padding-bottom:14px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="gr-pill-badge gr-pill-orange">⚡ NEW CARD DETECTED</span>
+            <span style="font-size:11px; font-weight:700; color:var(--primary);">ON-BOARD REGISTRATION</span>
+          </div>
+          <h3 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700; margin-top:6px;">Register Student to Scanned RFID</h3>
+          <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+            Enter student details to link with this RFID pass, enroll into BUS001 roster, and record immediate boarding attendance.
+          </p>
+        </div>
+        <button onclick="closeModal('modalReg')" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+      </div>
+
+      <form id="driverRegForm" onsubmit="submitDriverReg(event)">
+        
+        <!-- Scanned RFID (Auto-filled & Read-only) -->
+        <div class="reg-form-group">
+          <label>SCANNED RFID CARD UID (AUTO-DETECTED)</label>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="text" id="regModalRfid" readonly class="reg-form-input" style="font-weight:700; color:var(--primary); background:#f1f5f9; font-size:15px;">
+            <span class="gr-pill-badge gr-pill-green" style="white-space:nowrap;">VALID PASS</span>
+          </div>
+        </div>
+
+        <!-- Full Name -->
+        <div class="reg-form-group">
+          <label>STUDENT FULL NAME *</label>
+          <input type="text" id="regModalName" required placeholder="e.g. Ananya Sharma" class="reg-form-input">
+        </div>
+
+        <!-- Roll No & Department -->
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>STUDENT ROLL NO / ID *</label>
+            <input type="text" id="regModalRoll" required placeholder="e.g. 23CS042" class="reg-form-input" style="text-transform:uppercase;">
+          </div>
+          <div class="reg-form-group">
+            <label>ACADEMIC YEAR</label>
+            <select id="regModalYear" class="reg-form-select">
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3" selected>3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Department -->
+        <div class="reg-form-group">
+          <label>DEPARTMENT / COURSE *</label>
+          <select id="regModalDept" class="reg-form-select">
+            <option value="Computer Science">Computer Science & Engineering</option>
+            <option value="Electronics & Comm">Electronics & Communication</option>
+            <option value="Mechanical Engg">Mechanical Engineering</option>
+            <option value="Information Tech">Information Technology</option>
+            <option value="Electrical & Electronics">Electrical & Electronics</option>
+            <option value="Artificial Intelligence & DS">Artificial Intelligence & DS</option>
+            <option value="Civil Engineering">Civil Engineering</option>
+          </select>
+        </div>
+
+        <!-- Phone Numbers Grid -->
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>STUDENT PHONE *</label>
+            <input type="tel" id="regModalPhone" required placeholder="+91 98765 43210" class="reg-form-input">
+          </div>
+          <div class="reg-form-group">
+            <label>PARENT / GUARDIAN PHONE *</label>
+            <input type="tel" id="regModalParentPhone" required placeholder="+91 94433 11223" class="reg-form-input">
+          </div>
+        </div>
+
+        <!-- Pickup Stop & Bus Assignment -->
+        <div class="reg-form-grid-2">
+          <div class="reg-form-group">
+            <label>DESIGNATED PICKUP STOP *</label>
+            <select id="regModalPickup" class="reg-form-select">
+              <option value="Erode Stand">Erode Stand</option>
+              <option value="Perundurai Byp" selected>Perundurai Byp</option>
+              <option value="Chithode Junction">Chithode Junction</option>
+              <option value="College Campus Gate">College Campus Gate</option>
+            </select>
+          </div>
+          <div class="reg-form-group">
+            <label>ASSIGNED BUS ID</label>
+            <input type="text" id="regModalBusId" value="BUS001" readonly class="reg-form-input">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; border-top:1px solid var(--border-subtle); padding-top:16px;">
+          <button type="button" class="btn-gr btn-gr-outline" onclick="closeModal('modalReg')">Cancel</button>
+          <button type="submit" class="btn-gr btn-gr-success" style="font-size:14px; padding:10px 22px;">
+            ✅ Register & Confirm Boarding
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SOS EMERGENCY -->
+  <div class="gr-modal-backdrop" id="modalSOS">
+    <div class="gr-modal" style="border-top:6px solid #ef4444;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-family:'Space Grotesk'; color:#ef4444; font-size:20px;">🆘 Dispatch Emergency SOS</h3>
+        <button onclick="closeModal('modalSOS')" style="background:none; border:none; font-size:22px; cursor:pointer;">&times;</button>
+      </div>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+        Broadcasts an immediate emergency distress alarm with GPS bus telemetry to College Transport Dispatch and Campus Security.
+      </p>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn-gr btn-gr-outline" onclick="closeModal('modalSOS')">Cancel</button>
+        <button class="btn-gr btn-gr-danger" onclick="confirmSOSDispatch()">Yes, Dispatch SOS Alert</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="gr-toast-container" id="toastContainer"></div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  
+  <!-- Shared Store -->
+  <script src="shared_store.js"></script>
+
+  <script>
+    let map = null;
+    let busMarker = null;
+    let studentMarkersLayer = null;
+    let pickerMap = null;
+    let pickerMarker = null;
+    let currentFilter = 'all';
+    let currentStopIndex = 1;
+    let activeDriver = null;
+
+    // ==========================================
+    // DRIVER AUTHENTICATION & ACCESS CONTROL
+    // ==========================================
+    function requireDriverAuth() {
+      const driver = window.smartBusStore.getAuthenticatedDriver();
+      if (!driver || !driver.driver_id) {
+        window.location.replace("driver_auth.html?msg=unauthorized");
+        return null;
+      }
+      return driver;
+    }
+
+    function applyDriverProfile(driver) {
+      if (!driver) return;
+      const avatarEl = document.getElementById('headerDriverAvatar');
+      const nameEl = document.getElementById('headerDriverName');
+      const metaEl = document.getElementById('headerDriverMeta');
+      const pathEl = document.getElementById('headerFirebasePath');
+      const regBusEl = document.getElementById('regModalBusId');
+
+      if (avatarEl) {
+        avatarEl.textContent = driver.avatar || 'DR';
+        avatarEl.style.background = driver.avatar_color || '#2563eb';
+      }
+      if (nameEl) nameEl.textContent = driver.name;
+      if (metaEl) metaEl.innerHTML = `Driver &bull; <strong>${driver.bus_id}</strong> (${driver.driver_id})`;
+      if (pathEl) pathEl.textContent = `/bus/${driver.bus_id}`;
+      if (regBusEl) regBusEl.value = driver.bus_id;
+
+      // Dropdown details
+      const dropAvatar = document.getElementById('dropDriverAvatar');
+      const dropName = document.getElementById('dropDriverName');
+      const dropId = document.getElementById('dropDriverId');
+      const dropBus = document.getElementById('dropDriverBus');
+      const dropLicense = document.getElementById('dropDriverLicense');
+      const dropPhone = document.getElementById('dropDriverPhone');
+
+      if (dropAvatar) {
+        dropAvatar.textContent = driver.avatar || 'DR';
+        dropAvatar.style.background = driver.avatar_color || '#2563eb';
+      }
+      if (dropName) dropName.textContent = driver.name;
+      if (dropId) dropId.textContent = `ID: ${driver.driver_id}`;
+      if (dropBus) dropBus.textContent = driver.bus_id;
+      if (dropLicense) dropLicense.textContent = driver.license_number || 'N/A';
+      if (dropPhone) dropPhone.textContent = driver.phone || 'N/A';
+    }
+
+    function handleDriverLogout() {
+      if (confirm("Are you sure you want to log out from the Driver Console?")) {
+        window.smartBusStore.logoutDriver();
+        window.location.replace("driver_auth.html?msg=logged_out");
+      }
+    }
+
+    function toggleDriverProfileMenu() {
+      const menu = document.getElementById('driverProfileDropdown');
+      if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      const pill = document.getElementById('headerDriverPill');
+      const menu = document.getElementById('driverProfileDropdown');
+      if (pill && menu && !pill.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Guard check authentication
+      activeDriver = requireDriverAuth();
+      if (!activeDriver) return;
+
+      // 2. Set active bus ID on store
+      window.smartBusStore.setBusId(activeDriver.bus_id);
+
+      // 3. Render authenticated driver details
+      applyDriverProfile(activeDriver);
+
+      // 4. Initialize Map & UI
+      initMap();
+      renderAll();
+
+      // 5. Subscribe to Store updates
+      window.smartBusStore.subscribe((eventType, payload, state) => {
+        handleStoreEvent(eventType, payload, state);
+      });
+    });
+
+    function initMap() {
+      const state = window.smartBusStore.getState();
+      map = L.map('liveMap', { zoomControl: true }).setView([state.busData.lat, state.busData.lng], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Bus marker
+      const busIcon = L.divIcon({
+        className: 'custom-bus-icon',
+        html: '<div style="background:#2563eb; color:#fff; border:3px solid #fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 6px 14px rgba(37,99,235,0.4);">🚍</div>',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      const driverInfo = activeDriver || { name: 'John Peter', driver_id: 'DRV001', bus_id: 'BUS001' };
+      busMarker = L.marker([state.busData.lat, state.busData.lng], { icon: busIcon }).addTo(map);
+      busMarker.bindPopup(`<b>${state.busData.bus_id || driverInfo.bus_id} — Express</b><br>Driver: ${driverInfo.name} (${driverInfo.driver_id})`).openPopup();
+
+      // Route polyline
+      const routeCoords = state.routeStops.map(s => [s.lat, s.lng]);
+      L.polyline(routeCoords, { color: '#2563eb', weight: 4, opacity: 0.8, dashArray: '6, 6' }).addTo(map);
+
+      // Stop markers
+      state.routeStops.forEach(stop => {
+        L.circleMarker([stop.lat, stop.lng], {
+          radius: 6,
+          fillColor: stop.status === 'passed' ? '#10b981' : stop.status === 'current' ? '#2563eb' : '#64748b',
+          color: '#ffffff',
+          weight: 2,
+          fillOpacity: 1
+        }).bindTooltip(stop.name, { permanent: false }).addTo(map);
+      });
+
+      // Layer for student custom boarding locations
+      studentMarkersLayer = L.layerGroup().addTo(map);
+      updateLiveMapStudentPins(state.students);
+    }
+
+    function updateLiveMapStudentPins(students) {
+      if (!studentMarkersLayer) return;
+      studentMarkersLayer.clearLayers();
+
+      students.forEach(s => {
+        if (typeof s.pickup_lat === 'number' && typeof s.pickup_lng === 'number' && !isNaN(s.pickup_lat)) {
+          const isCompleted = s.enrollment_status === 'Completed';
+          const isDiscontinued = s.enrollment_status === 'Discontinued';
+          const color = isCompleted ? '#0284c7' : isDiscontinued ? '#dc2626' : (s.avatar_color || '#2563eb');
+
+          const pinIcon = L.divIcon({
+            className: 'custom-student-pin',
+            html: `<div style="background:${color}; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #fff; box-shadow:0 3px 8px rgba(0,0,0,0.35); color:#fff; font-size:10px; font-weight:800;">${s.avatar || 'ST'}</div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
+          });
+
+          const m = L.marker([s.pickup_lat, s.pickup_lng], { icon: pinIcon });
+          m.bindPopup(`
+            <div style="font-family:'Inter',sans-serif; min-width:180px;">
+              <div style="font-weight:700; font-size:13px; color:#0f172a;">${s.name} (${s.student_id})</div>
+              <div style="font-size:11px; color:#64748b; margin:2px 0 4px 0;">📍 Boarding: <strong>${s.pickup_point}</strong></div>
+              <div style="font-size:11px; margin-bottom:8px;">Status: <strong>${s.enrollment_status || 'Active'}</strong> &bull; ${s.status}</div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-gr btn-gr-outline" style="font-size:10px; padding:3px 8px;" onclick="openEditBoardingMapModal('${s.rfid}')">🗺️ Edit Boarding Map</button>
+                <button class="btn-gr btn-gr-outline" style="font-size:10px; padding:3px 8px;" onclick="openEditStudentModal('${s.rfid}')">✏️ Edit Student</button>
+              </div>
+            </div>
+          `);
+          m.addTo(studentMarkersLayer);
+        }
+      });
+    }
+
+    function renderAll() {
+      const state = window.smartBusStore.getState();
+      
+      // Update Top Metrics
+      document.getElementById('metricTotalBoarded').textContent = state.busData.occupancy;
+      document.getElementById('metricDistance').textContent = state.busData.distance_km;
+      document.getElementById('metricOccupancyRate').textContent = `${Math.round((state.busData.occupancy / state.busData.max_seats) * 100)}% Occupied`;
+      document.getElementById('sidebarRosterCount').textContent = state.students.length;
+      document.getElementById('sidebarUnknownCount').textContent = state.unknownCards.length;
+
+      // Render Scanner Cockpit
+      renderScanCockpit(state);
+
+      // Render Passenger Roster Table
+      renderRosterTable(state.students);
+
+      // Render Live RFID Scan Activity Log
+      renderScanHistoryTable(state.scanHistory || []);
+
+      // Update Map Position & Student Pins
+      if (map && busMarker) {
+        busMarker.setLatLng([state.busData.lat, state.busData.lng]);
+        document.getElementById('mapCoordLabel').textContent = `${state.busData.lat.toFixed(4)}, ${state.busData.lng.toFixed(4)}`;
+      }
+      updateLiveMapStudentPins(state.students);
+    }
+
+    // ==========================================
+    // RFID SCANNER COCKPIT RENDERER
+    // ==========================================
+    function renderScanCockpit(state) {
+      const container = document.getElementById('dynamicScanContainer');
+      const cockpit = document.getElementById('rfidScannerCockpit');
+      const beaconDot = document.getElementById('scannerBeaconDot');
+      const timestampLabel = document.getElementById('lastScanTimestampLabel');
+
+      const lastScan = state.lastScan;
+
+      if (!lastScan) {
+        cockpit.className = "rfid-scanner-cockpit";
+        beaconDot.className = "scanner-beacon-dot online";
+        timestampLabel.textContent = "Listening...";
+
+        container.innerHTML = `
+          <div class="scan-result-card idle">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="font-size:28px;">📡</div>
+              <div>
+                <div style="font-size:14px; font-weight:700; color:var(--text-main);">
+                  Scanner Ready — Tap RFID Card on ESP32 Reader
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                  1st Tap: <strong>Auto-Verify Boarding</strong> &bull; 2nd Tap: <strong>Auto-Verify Landing (Safe Drop-off)</strong> &bull; New Card: <strong>Instant Onboarding</strong>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn-sim sim-green" onclick="testCardTap('RFID-102938')">🟢 Tap: Ajay Pravin</button>
+              <button class="btn-sim sim-yellow" onclick="testCardTap('RFID-999999')">🟡 Tap: New Card</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (lastScan.action === "LANDED" && lastScan.student) {
+        cockpit.className = "rfid-scanner-cockpit state-active-landed";
+        beaconDot.className = "scanner-beacon-dot landed";
+        timestampLabel.textContent = `${lastScan.timestamp}`;
+
+        container.innerHTML = `
+          <div class="scan-result-card landed">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div class="scan-student-avatar" style="background:#7e22ce; border:2px solid #e9d5ff; box-shadow:0 6px 16px rgba(126,34,206,0.4);">
+                🏁
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="uid-chip" style="background:rgba(255,255,255,0.2);">${lastScan.rfid}</span>
+                  <span class="gr-pill-badge gr-pill-purple" style="background:#ffffff; color:#7e22ce; font-weight:800;">🏁 2ND TAP: STUDENT SAFELY LANDED</span>
+                  <span style="font-size:11px; color:#e9d5ff;">Time: ${lastScan.timestamp}</span>
+                </div>
+                <h3 style="font-family:'Space Grotesk'; font-size:22px; font-weight:700; margin-top:4px;">
+                  ${lastScan.student.name} has safely landed / dropped off
+                </h3>
+                <p style="font-size:13px; color:#e9d5ff; margin-top:2px;">
+                  Roll No: <strong>${lastScan.student.student_id}</strong> &bull; Destination Stop: <strong>${lastScan.stop || state.busData.current_stop}</strong> &bull; Occupancy: <strong>${state.busData.occupancy}/50 seats</strong>
+                </p>
+              </div>
+            </div>
+
+            <div class="scan-action-buttons">
+              <button class="btn-gr btn-gr-outline" style="color:#fff; border-color:rgba(255,255,255,0.4);" onclick="openEditStudentModal('${lastScan.rfid}')">
+                ✏️ Edit Student
+              </button>
+              <button class="btn-gr btn-gr-outline" style="color:#fff; border-color:rgba(255,255,255,0.4);" onclick="dismissScan()">
+                Dismiss
+              </button>
+              <button class="btn-gr btn-gr-primary" style="background:#ffffff; color:#7e22ce; font-weight:700; border:none;" onclick="testCardTap('${lastScan.rfid}')">
+                🔄 Tap Again to Board
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (lastScan.action === "BOARDED" && lastScan.student) {
+        cockpit.className = "rfid-scanner-cockpit state-active-registered";
+        beaconDot.className = "scanner-beacon-dot scanning";
+        timestampLabel.textContent = `${lastScan.timestamp}`;
+
+        container.innerHTML = `
+          <div class="scan-result-card registered">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div class="scan-student-avatar" style="background:${lastScan.student.avatar_color || '#2563eb'};">
+                ${lastScan.student.avatar || 'ST'}
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="uid-chip">${lastScan.rfid}</span>
+                  <span class="gr-pill-badge gr-pill-green">🟢 1ST TAP: STUDENT BOARDED & VERIFIED</span>
+                  <span style="font-size:11px; color:#93c5fd;">Time: ${lastScan.timestamp}</span>
+                </div>
+                <h3 style="font-family:'Space Grotesk'; font-size:22px; font-weight:700; margin-top:4px;">
+                  ${lastScan.student.name} Boarded Bus
+                </h3>
+                <p style="font-size:13px; color:#cbd5e1; margin-top:2px;">
+                  Roll No: <strong>${lastScan.student.student_id}</strong> &bull; Pickup Stop: <strong>${lastScan.stop || lastScan.student.pickup_point}</strong> &bull; Occupancy: <strong>${state.busData.occupancy}/50 seats</strong>
+                </p>
+              </div>
+            </div>
+
+            <div class="scan-action-buttons">
+              <button class="btn-gr btn-gr-outline" style="color:#fff; border-color:rgba(255,255,255,0.3);" onclick="openEditBoardingMapModal('${lastScan.rfid}')">
+                📍 Boarding Map
+              </button>
+              <button class="btn-gr btn-gr-outline" style="color:#fff; border-color:rgba(255,255,255,0.3);" onclick="openEditStudentModal('${lastScan.rfid}')">
+                ✏️ Edit Student
+              </button>
+              <button class="btn-gr btn-gr-outline" style="color:#fff; border-color:rgba(255,255,255,0.3);" onclick="dismissScan()">
+                Dismiss
+              </button>
+              <button class="btn-gr btn-gr-primary" style="background:#8b5cf6; color:#fff; border:none; font-weight:700;" onclick="testCardTap('${lastScan.rfid}')">
+                🏁 Tap to Land (Drop-off)
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (!lastScan.isRegistered) {
+        cockpit.className = "rfid-scanner-cockpit state-active-new";
+        beaconDot.className = "scanner-beacon-dot alert-new";
+        timestampLabel.textContent = `${lastScan.timestamp}`;
+
+        container.innerHTML = `
+          <div class="scan-result-card new-card">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="width:54px; height:54px; border-radius:16px; background:#fef3c7; color:#b45309; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; box-shadow:0 4px 14px rgba(245,158,11,0.4);">
+                ⚠️
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="uid-chip warning">${lastScan.rfid}</span>
+                  <span class="gr-pill-badge gr-pill-orange">⚡ NEW CARD DETECTED &bull; UNREGISTERED</span>
+                  <span style="font-size:11px; color:#fef3c7;">Time: ${lastScan.timestamp}</span>
+                </div>
+                <h3 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700; margin-top:4px;">
+                  Unregistered RFID Card Tap (${lastScan.rfid})
+                </h3>
+                <p style="font-size:13px; color:#fde68a; margin-top:2px;">
+                  This RFID card has not been registered yet. Click below to collect student details and link this pass.
+                </p>
+              </div>
+            </div>
+
+            <div class="scan-action-buttons">
+              <button class="btn-gr btn-gr-outline" style="color:#fff; border-color:rgba(255,255,255,0.4);" onclick="dismissScan()">
+                Dismiss
+              </button>
+              <button class="btn-gr btn-gr-primary" style="font-size:14px; padding:12px 24px; font-weight:700; background:#ffffff; color:#92400e; border:none;" onclick="openRegModal('${lastScan.rfid}')">
+                ➕ Register Student Now &rarr;
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+    }
+
+    // ==========================================
+    // PASSENGER ROSTER TABLE RENDERER
+    // ==========================================
+    function renderRosterTable(students) {
+      const tbody = document.getElementById('rosterTableBody');
+      const search = (document.getElementById('rosterSearchInput') ? document.getElementById('rosterSearchInput').value : '').toLowerCase();
+      
+      let filtered = students.filter(s => {
+        const matchesSearch = (s.name || '').toLowerCase().includes(search) || 
+                              (s.student_id || '').toLowerCase().includes(search) || 
+                              (s.pickup_point || '').toLowerCase().includes(search) ||
+                              (s.rfid || '').toLowerCase().includes(search);
+        if (!matchesSearch) return false;
+
+        const enrollStatus = s.enrollment_status || 'Active';
+        if (currentFilter === 'active') return enrollStatus === 'Active';
+        if (currentFilter === 'completed') return enrollStatus === 'Completed';
+        if (currentFilter === 'discontinued') return enrollStatus === 'Discontinued';
+        if (currentFilter === 'boarded') return s.status === 'Boarded';
+        if (currentFilter === 'landed') return s.status === 'Landed';
+        if (currentFilter === 'waiting') return s.status !== 'Boarded' && s.status !== 'Landed';
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">No matching student records found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(s => {
+        const isBoarded = s.status === 'Boarded';
+        const isLanded = s.status === 'Landed';
+        const enrollStatus = s.enrollment_status || 'Active';
+        const isCompleted = enrollStatus === 'Completed';
+        const isDiscontinued = enrollStatus === 'Discontinued';
+        const isTransferred = enrollStatus === 'Transferred';
+
+        let enrollBadgeClass = 'gr-pill-green';
+        let enrollBadgeText = '🟢 Active';
+        if (isCompleted) {
+          enrollBadgeClass = 'gr-pill-completed';
+          enrollBadgeText = '🎓 Completed / Passed Out';
+        } else if (isDiscontinued) {
+          enrollBadgeClass = 'gr-pill-discontinued';
+          enrollBadgeText = '🚫 Discontinued';
+        } else if (isTransferred) {
+          enrollBadgeClass = 'gr-pill-transferred';
+          enrollBadgeText = '🔄 Transferred';
+        }
+
+        const coordsText = (typeof s.pickup_lat === 'number' && typeof s.pickup_lng === 'number' && !isNaN(s.pickup_lat))
+          ? `${s.pickup_lat.toFixed(4)}, ${s.pickup_lng.toFixed(4)}`
+          : 'Set on map';
+
+        return `
+          <tr style="${(isCompleted || isDiscontinued) ? 'background:#f8fafc; opacity:0.92;' : ''}">
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:34px; height:34px; border-radius:50%; background:${s.avatar_color || '#2563eb'}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                  ${s.avatar || 'ST'}
+                </div>
+                <div>
+                  <div style="font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                    ${s.name}
+                    ${isCompleted ? '<span style="font-size:10px; color:#0369a1; font-weight:600; background:#e0f2fe; padding:1px 5px; border-radius:4px;">Completed</span>' : ''}
+                    ${isDiscontinued ? '<span style="font-size:10px; color:#b91c1c; font-weight:600; background:#fee2e2; padding:1px 5px; border-radius:4px;">Discontinued</span>' : ''}
+                  </div>
+                  <div style="font-size:11px; color:var(--text-muted);">${s.department} &bull; Year ${s.year || 1}</div>
+                </div>
+              </div>
+            </td>
+            <td style="font-family:'IBM Plex Mono'; font-weight:600; font-size:12px;">${s.student_id}</td>
+            <td>
+              <span class="gr-pill-badge ${enrollBadgeClass}" style="font-size:11px; padding:3px 8px; font-weight:600;">
+                ${enrollBadgeText}
+              </span>
+              ${s.status_reason ? `<div style="font-size:10px; color:var(--text-muted); margin-top:2px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.status_reason}">"${s.status_reason}"</div>` : ''}
+            </td>
+            <td>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div>
+                  <div style="font-weight:700; font-size:13px; color:var(--text-main);">📍 ${s.pickup_point}</div>
+                  <div style="font-size:10px; font-family:'IBM Plex Mono'; color:var(--text-muted);">${coordsText}</div>
+                </div>
+                <button class="btn-gr btn-gr-outline" style="font-size:10px; padding:3px 7px; margin-left:4px;" onclick="openEditBoardingMapModal('${s.rfid}')" title="Edit boarding location on interactive map">
+                  🗺️ Map
+                </button>
+              </div>
+            </td>
+            <td><span style="font-family:'IBM Plex Mono'; font-size:11px; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${s.rfid}</span></td>
+            <td>
+              <span class="gr-pill-badge ${isBoarded ? 'gr-pill-green' : isLanded ? 'gr-pill-purple' : 'gr-pill-orange'}">
+                ${isBoarded ? '🟢 Boarded' : isLanded ? '🏁 Landed' : '○ Waiting'}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex; justify-content:flex-end; gap:6px; flex-wrap:wrap;">
+                <button class="btn-gr btn-gr-outline" style="font-size:11px; padding:4px 9px; font-weight:600;" onclick="openEditStudentModal('${s.rfid}')" title="Edit Student Name, School Status, or Reassign Pass">
+                  ✏️ Edit Student
+                </button>
+                <button class="btn-gr btn-gr-outline" style="font-size:11px; padding:4px 9px; color:#2563eb; border-color:#93c5fd;" onclick="openEditBoardingMapModal('${s.rfid}')" title="Edit Boarding Point on Map">
+                  📍 Boarding Map
+                </button>
+                ${isBoarded ? `
+                  <button class="btn-gr btn-gr-outline" style="font-size:11px; padding:4px 8px; color:#7e22ce; border-color:#d8b4fe;" onclick="tapStudentPass('${s.rfid}')" title="2nd Tap: Safe Landing">
+                    🏁 Land
+                  </button>
+                ` : isLanded ? `
+                  <button class="btn-gr btn-gr-outline" style="font-size:11px; padding:4px 8px; color:#10b981; border-color:#a7f3d0;" onclick="tapStudentPass('${s.rfid}')" title="1st Tap: Board Bus">
+                    🟢 Board
+                  </button>
+                ` : `
+                  <button class="btn-gr btn-gr-primary" style="font-size:11px; padding:4px 8px;" onclick="tapStudentPass('${s.rfid}')" title="1st Tap: Board Bus">
+                    🟢 Board
+                  </button>
+                `}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ==========================================
+    // LIVE RFID SCAN ACTIVITY LOG RENDERER
+    // ==========================================
+    function renderScanHistoryTable(history) {
+      const tbody = document.getElementById('scanHistoryTableBody');
+      const badge = document.getElementById('scanHistoryCountBadge');
+      if (badge) badge.textContent = `${history.length} Taps`;
+
+      if (!history || history.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:18px; color:var(--text-muted);">No scan events recorded yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = history.slice(0, 15).map(h => {
+        const isReg = h.isRegistered;
+        const isLanded = h.action === 'LANDED' || (h.status && h.status.includes('Landed'));
+        const isBoarded = h.action === 'BOARDED' || (h.status && h.status.includes('Boarded'));
+        return `
+          <tr>
+            <td style="font-family:'IBM Plex Mono'; font-size:12px; font-weight:600; color:var(--text-muted);">${h.timestamp}</td>
+            <td><span class="uid-chip ${isReg ? '' : 'warning'}" style="font-size:11px; padding:2px 6px;">${h.rfid}</span></td>
+            <td>
+              <span class="gr-pill-badge ${isBoarded ? 'gr-pill-green' : isLanded ? 'gr-pill-purple' : 'gr-pill-orange'}">
+                ${isBoarded ? '🟢 Boarded' : isLanded ? '🏁 Landed' : '🟡 New Card'}
+              </span>
+            </td>
+            <td>
+              <div style="font-weight:600; font-size:13px; color:var(--text-main);">${h.studentName}</div>
+              <div style="font-size:11px; color:var(--text-muted);">${h.studentId || ''} &bull; ${h.pickup || ''}</div>
+            </td>
+            <td>
+              ${!isReg ? `
+                <button class="btn-gr btn-gr-primary" style="font-size:11px; padding:3px 8px;" onclick="openRegModal('${h.rfid}')">
+                  Register &rarr;
+                </button>
+              ` : `
+                <span style="font-size:11px; color:var(--text-muted);">${h.status}</span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ==========================================
+    // DRIVER EDIT STUDENT MODAL LOGIC
+    // ==========================================
+    function openEditStudentModal(rfid) {
+      const state = window.smartBusStore.getState();
+      const student = state.students.find(s => s.rfid.toUpperCase() === rfid.toUpperCase());
+      if (!student) {
+        showToast(`Student with RFID ${rfid} not found.`, 'warning');
+        return;
+      }
+
+      document.getElementById('editModalOriginalRfid').value = student.rfid;
+      document.getElementById('editModalRfid').value = student.rfid;
+      document.getElementById('editModalName').value = student.name;
+      document.getElementById('editModalRoll').value = student.student_id;
+      document.getElementById('editModalDept').value = student.department || 'Computer Science';
+      document.getElementById('editModalYear').value = student.year || '1';
+      document.getElementById('editModalPhone').value = student.phone || '';
+      document.getElementById('editModalParentPhone').value = student.parent_phone || '';
+      document.getElementById('editModalPickup').value = student.pickup_point || '';
+      document.getElementById('editModalEnrollmentStatus').value = student.enrollment_status || 'Active';
+      document.getElementById('editModalReason').value = student.status_reason || '';
+      document.getElementById('editModalTitle').textContent = `Edit Profile: ${student.name} (${student.student_id})`;
+
+      onEnrollmentStatusChange();
+      document.getElementById('modalEditStudent').classList.add('active');
+    }
+
+    function onEnrollmentStatusChange() {
+      const status = document.getElementById('editModalEnrollmentStatus').value;
+      const notice = document.getElementById('completedStatusNotice');
+      if (status === 'Completed' || status === 'Discontinued') {
+        notice.style.display = 'flex';
+        if (!document.getElementById('editModalReason').value) {
+          document.getElementById('editModalReason').value = status === 'Completed' ? 'Course completed / Graduated' : 'Discontinued studies';
+        }
+      } else {
+        notice.style.display = 'none';
+      }
+    }
+
+    function prepareReassignStudent() {
+      const oldName = document.getElementById('editModalName').value;
+      document.getElementById('editModalName').value = '';
+      document.getElementById('editModalRoll').value = '';
+      document.getElementById('editModalPhone').value = '';
+      document.getElementById('editModalParentPhone').value = '';
+      document.getElementById('editModalEnrollmentStatus').value = 'Active';
+      document.getElementById('editModalReason').value = `Reassigned from ${oldName}`;
+      document.getElementById('completedStatusNotice').style.display = 'none';
+      showToast('Fields cleared! Enter new student name and roll number to reassign this pass.', 'info');
+      document.getElementById('editModalName').focus();
+    }
+
+    function openBoardingMapFromEditModal() {
+      const rfid = document.getElementById('editModalOriginalRfid').value;
+      closeModal('modalEditStudent');
+      openEditBoardingMapModal(rfid);
+    }
+
+    function submitEditStudent(e) {
+      e.preventDefault();
+      const rfid = document.getElementById('editModalOriginalRfid').value;
+      const name = document.getElementById('editModalName').value;
+      const roll = document.getElementById('editModalRoll').value;
+      const dept = document.getElementById('editModalDept').value;
+      const year = document.getElementById('editModalYear').value;
+      const phone = document.getElementById('editModalPhone').value;
+      const parentPhone = document.getElementById('editModalParentPhone').value;
+      const pickup = document.getElementById('editModalPickup').value;
+      const enrollmentStatus = document.getElementById('editModalEnrollmentStatus').value;
+      const reason = document.getElementById('editModalReason').value;
+
+      window.smartBusStore.updateStudent(rfid, {
+        name,
+        student_id: roll,
+        department: dept,
+        year,
+        phone,
+        parent_phone: parentPhone,
+        pickup_point: pickup,
+        enrollment_status: enrollmentStatus,
+        status_reason: reason
+      });
+
+      closeModal('modalEditStudent');
+      showToast(`✅ Successfully updated student ${name} (${roll})!`, 'success');
+    }
+
+    function deleteStudentPrompt() {
+      const rfid = document.getElementById('editModalOriginalRfid').value;
+      const name = document.getElementById('editModalName').value;
+      if (confirm(`Are you sure you want to delete ${name} (${rfid}) from the bus roster?`)) {
+        window.smartBusStore.deleteStudent(rfid);
+        closeModal('modalEditStudent');
+        showToast(`🗑️ Student ${name} removed from roster.`, 'warning');
+      }
+    }
+
+    // ==========================================
+    // DRIVER EDIT BOARDING LOCATION MAP PICKER
+    // ==========================================
+    function openEditBoardingMapModal(rfid) {
+      const state = window.smartBusStore.getState();
+      const student = state.students.find(s => s.rfid.toUpperCase() === rfid.toUpperCase());
+      if (!student) {
+        showToast(`Student with RFID ${rfid} not found.`, 'warning');
+        return;
+      }
+
+      document.getElementById('mapModalRfid').value = student.rfid;
+      document.getElementById('mapModalStopName').value = student.pickup_point || 'Perundurai Byp';
+      document.getElementById('mapModalLat').value = (typeof student.pickup_lat === 'number' && !isNaN(student.pickup_lat)) ? student.pickup_lat.toFixed(6) : (state.busData.lat || 11.278000);
+      document.getElementById('mapModalLng').value = (typeof student.pickup_lng === 'number' && !isNaN(student.pickup_lng)) ? student.pickup_lng.toFixed(6) : (state.busData.lng || 77.585000);
+      document.getElementById('mapModalNotes').value = student.pickup_notes || '';
+      document.getElementById('boardingMapStudentHeader').textContent = `${student.name.toUpperCase()} (${student.student_id})`;
+
+      document.getElementById('modalEditBoardingMap').classList.add('active');
+
+      setTimeout(() => {
+        initBoardingPickerMap(parseFloat(document.getElementById('mapModalLat').value), parseFloat(document.getElementById('mapModalLng').value), student);
+      }, 150);
+    }
+
+    function initBoardingPickerMap(lat, lng, student) {
+      const state = window.smartBusStore.getState();
+      const mapContainer = document.getElementById('modalBoardingMap');
+
+      if (!pickerMap) {
+        pickerMap = L.map('modalBoardingMap', { zoomControl: true }).setView([lat, lng], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(pickerMap);
+
+        // Draw bus route line for reference
+        const routeCoords = state.routeStops.map(s => [s.lat, s.lng]);
+        L.polyline(routeCoords, { color: '#2563eb', weight: 4, opacity: 0.7, dashArray: '6, 6' }).addTo(pickerMap);
+
+        // Draw route stop points
+        state.routeStops.forEach(stop => {
+          L.circleMarker([stop.lat, stop.lng], {
+            radius: 5,
+            fillColor: '#64748b',
+            color: '#ffffff',
+            weight: 2,
+            fillOpacity: 1
+          }).bindTooltip(stop.name, { permanent: false }).addTo(pickerMap);
+        });
+
+        // Click map to reposition marker
+        pickerMap.on('click', (e) => {
+          updatePickerMarkerPosition(e.latlng.lat, e.latlng.lng);
+        });
+      }
+
+      pickerMap.invalidateSize();
+      pickerMap.setView([lat, lng], 14);
+
+      if (pickerMarker) {
+        pickerMarker.setLatLng([lat, lng]);
+      } else {
+        const studentIcon = L.divIcon({
+          className: 'custom-student-pin',
+          html: '<div style="background:#2563eb; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid #fff; box-shadow:0 4px 14px rgba(37,99,235,0.6); color:#fff; font-size:16px;">📍</div>',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+
+        pickerMarker = L.marker([lat, lng], { draggable: true, icon: studentIcon }).addTo(pickerMap);
+
+        pickerMarker.on('dragend', (e) => {
+          const pos = e.target.getLatLng();
+          updatePickerMarkerPosition(pos.lat, pos.lng);
+        });
+      }
+
+      pickerMarker.bindPopup(`<b>${student.name}</b><br>Drag pin or click map to reposition`).openPopup();
+    }
+
+    function updatePickerMarkerPosition(lat, lng) {
+      if (pickerMarker) {
+        pickerMarker.setLatLng([lat, lng]);
+      }
+      document.getElementById('mapModalLat').value = lat.toFixed(6);
+      document.getElementById('mapModalLng').value = lng.toFixed(6);
+    }
+
+    function setBoardingPreset(name, lat, lng) {
+      document.getElementById('mapModalStopName').value = name;
+      updatePickerMarkerPosition(lat, lng);
+      if (pickerMap) {
+        pickerMap.panTo([lat, lng]);
+      }
+    }
+
+    function setBoardingToCurrentBusLocation() {
+      const state = window.smartBusStore.getState();
+      const currentStop = state.busData.current_stop || "Current GPS Location";
+      document.getElementById('mapModalStopName').value = currentStop;
+      updatePickerMarkerPosition(state.busData.lat, state.busData.lng);
+      if (pickerMap) {
+        pickerMap.panTo([state.busData.lat, state.busData.lng]);
+      }
+      showToast(`📍 Set pin to current bus location: ${currentStop}`, 'info');
+    }
+
+    function submitEditBoardingMap(e) {
+      e.preventDefault();
+      const rfid = document.getElementById('mapModalRfid').value;
+      const stopName = document.getElementById('mapModalStopName').value;
+      const lat = parseFloat(document.getElementById('mapModalLat').value);
+      const lng = parseFloat(document.getElementById('mapModalLng').value);
+      const notes = document.getElementById('mapModalNotes').value;
+
+      window.smartBusStore.updateStudentBoardingLocation(rfid, stopName, lat, lng, notes);
+      closeModal('modalEditBoardingMap');
+      showToast(`📍 Boarding location updated to "${stopName}"!`, 'success');
+    }
+
+    // ==========================================
+    // EVENT HANDLERS & STORE INTEGRATION
+    // ==========================================
+    function handleStoreEvent(type, payload, state) {
+      renderAll();
+
+      if (type === 'STUDENT_BOARDED') {
+        const busTag = (payload.record && payload.record.bus_id) ? payload.record.bus_id : (activeDriver ? activeDriver.bus_id : 'BUS001');
+        showToast(`🟢 1st Tap: ${payload.student.name} (${payload.student.student_id}) Boarded ${busTag}!`, 'success');
+      } else if (type === 'STUDENT_LANDED') {
+        showToast(`🏁 2nd Tap: ${payload.student.name} (${payload.student.student_id}) Safely Landed / Dropped Off!`, 'success');
+      } else if (type === 'UNKNOWN_CARD_DETECTED') {
+        showToast(`⚠️ NEW UNREGISTERED CARD TAP: ${payload.rfid}`, 'warning');
+        openRegModal(payload.rfid);
+      } else if (type === 'STUDENT_REGISTERED') {
+        showToast(`🎉 ${payload.student.name} successfully registered and boarded!`, 'success');
+      } else if (type === 'STUDENT_UPDATED') {
+        showToast(`✏️ Student details updated for ${payload.student.name}!`, 'info');
+      } else if (type === 'STUDENT_BOARDING_LOCATION_UPDATED') {
+        showToast(`📍 Boarding location updated for ${payload.student.name}!`, 'info');
+      } else if (type === 'SOS_TRIGGERED') {
+        showToast(`🆘 EMERGENCY SOS ALERT TRANSMITTED!`, 'danger');
+      }
+    }
+
+    function tapStudentPass(rfid) {
+      window.smartBusStore.handleIncomingScan(rfid);
+    }
+
+    function dismissScan() {
+      window.smartBusStore.dismissScan();
+      renderAll();
+    }
+
+    function testCardTap(rfid) {
+      window.smartBusStore.handleIncomingScan(rfid);
+    }
+
+    function promptCustomTap() {
+      const rfid = prompt("Enter RFID UID to scan (e.g. RFID-884422):", "RFID-778899");
+      if (rfid) window.smartBusStore.handleIncomingScan(rfid);
+    }
+
+    function testNextStop() {
+      currentStopIndex = (currentStopIndex + 1) % 4;
+      window.smartBusStore.advanceRoute(currentStopIndex);
+      showToast(`📍 Bus arrived at ${window.smartBusStore.getState().busData.current_stop}`, 'info');
+    }
+
+    function recenterMap() {
+      const state = window.smartBusStore.getState();
+      map.panTo([state.busData.lat, state.busData.lng]);
+    }
+
+    function filterRoster(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.btn-sim').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderRosterTable(window.smartBusStore.getState().students);
+    }
+
+    function handleRosterSearch() {
+      renderRosterTable(window.smartBusStore.getState().students);
+    }
+
+    function openRegModal(rfid) {
+      document.getElementById('regModalRfid').value = rfid || 'RFID-999999';
+      document.getElementById('modalReg').classList.add('active');
+      setTimeout(() => {
+        const nameInput = document.getElementById('regModalName');
+        if (nameInput) nameInput.focus();
+      }, 150);
+    }
+
+    function submitDriverReg(e) {
+      e.preventDefault();
+      const rfid = document.getElementById('regModalRfid').value;
+      const name = document.getElementById('regModalName').value;
+      const roll = document.getElementById('regModalRoll').value;
+      const year = document.getElementById('regModalYear').value;
+      const dept = document.getElementById('regModalDept').value;
+      const phone = document.getElementById('regModalPhone').value;
+      const parentPhone = document.getElementById('regModalParentPhone').value;
+      const pickup = document.getElementById('regModalPickup').value;
+      const busId = document.getElementById('regModalBusId').value;
+
+      window.smartBusStore.registerNewStudent({
+        rfid,
+        name,
+        student_id: roll,
+        year,
+        department: dept,
+        phone,
+        parent_phone: parentPhone,
+        pickup_point: pickup,
+        bus_id: busId
+      });
+
+      closeModal('modalReg');
+      document.getElementById('driverRegForm').reset();
+    }
+
+    function triggerSOSModal() {
+      document.getElementById('modalSOS').classList.add('active');
+    }
+
+    function confirmSOSDispatch() {
+      closeModal('modalSOS');
+      window.smartBusStore.triggerSOS();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `gr-toast ${type}`;
+      toast.innerHTML = `<span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function switchNav(section, el) {
+      document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+  </script>
+</body>
+</html>
+

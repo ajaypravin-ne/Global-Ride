@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMARTBUS &bull; GlobalRide — Smart College Bus Attendance Platform</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Shared GlobalRide Design System -->
+  <link rel="stylesheet" href="globalride.css">
+
+  <style>
+    body {
+      background: #f1f5f9;
+    }
+
+    .landing-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 80px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .landing-hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      border-radius: var(--radius-xl);
+      padding: 40px 48px;
+      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.25);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .landing-hero::before {
+      content: '';
+      position: absolute;
+      right: -60px;
+      top: -60px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.35) 0%, rgba(37, 99, 235, 0) 70%);
+      pointer-events: none;
+    }
+
+    .workflow-pill-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .wf-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .wf-arrow {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    /* Portal Launch Cards Grid */
+    .portal-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .portal-cards-grid {
+        grid-template-columns: 1fr;
+      }
+      .landing-hero {
+        padding: 28px 24px;
+      }
+    }
+
+    .portal-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 30px 26px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      transition: all var(--transition-normal);
+    }
+
+    .portal-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary);
+    }
+
+    .portal-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .portal-features-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 20px 0 24px 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .portal-features-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="landing-container">
+    
+    <!-- Top Header Brand Navigation -->
+    <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="brand-logo-icon" style="width:42px; height:42px; font-size:20px;">🚍</div>
+        <div>
+          <div class="brand-text" style="font-size:22px;">GLOBAL<span>RIDE</span></div>
+          <div style="font-size:11px; color:var(--text-muted); font-weight:600; letter-spacing:0.5px;">SMARTBUS SAFETY &bull; RFID ATTENDANCE PLATFORM</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="gr-pill-badge gr-pill-green">🟢 Firebase RTDB Connected</span>
+        <a href="bus_dashboard.html" class="btn-gr btn-gr-outline" style="font-size:12px; padding:6px 14px;">
+          ⚡ Unified Studio
+        </a>
+        <a href="reset_data.html" class="btn-gr btn-gr-outline" style="font-size:12px; padding:6px 14px; color:#ef4444; border-color:#fca5a5;" title="System Reset &amp; Clean Data">
+          ⚙️ Reset Data
+        </a>
+      </div>
+    </header>
+
+    <!-- Executive Hero Banner -->
+    <section class="landing-hero">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="gr-pill-badge gr-pill-blue" style="background:#2563eb; color:#fff;">v2.0 PRODUCTION ARCHITECTURE</span>
+        <span style="font-family:'IBM Plex Mono'; font-size:12px; color:#94a3b8;">ESP32 &bull; MFRC522 &bull; NEO-6M GPS &bull; FIREBASE</span>
+      </div>
+
+      <h1 style="font-family:'Space Grotesk'; font-size:36px; font-weight:800; margin-top:12px; line-height:1.2;">
+        RFID Scan Triggered &bull; Driver Confirmed &bull; Live Parent Telemetry
+      </h1>
+      <p style="color:#cbd5e1; font-size:15px; max-width:800px; margin-top:10px; line-height:1.6;">
+        The student taps their RFID card at the bus door. The ESP32 pushes the hardware scan to Firebase. The driver immediately verifies the passenger on the private console, creating an official attendance record that streams live to parents and students.
+      </p>
+
+      <!-- Workflow Timeline Pills -->
+      <div class="workflow-pill-bar">
+        <div class="wf-step">
+          <span>💳 1. Student Taps RFID</span>
+        </div>
+        <span class="wf-arrow">&rarr;</span>
+        <div class="wf-step">
+          <span>📡 2. ESP32 &rarr; Firebase</span>
+        </div>
+        <span class="wf-arrow">&rarr;</span>
+        <div class="wf-step" style="background:rgba(37, 99, 235, 0.3); border-color:#3b82f6; color:#93c5fd;">
+          <span>🚍 3. Driver Confirms Boarding</span>
+        </div>
+        <span class="wf-arrow">&rarr;</span>
+        <div class="wf-step" style="background:rgba(16, 185, 129, 0.3); border-color:#10b981; color:#6ee7b7;">
+          <span>👨‍👩‍👧 4. Parent Sees Boarded & Live Map</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Role Portals Grid -->
+    <section>
+      <div style="margin-bottom:16px;">
+        <h2 style="font-family:'Space Grotesk'; font-size:22px; font-weight:700;">Select Role-Specific Dashboard</h2>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:2px;">Experience each perspective of the transport ecosystem</p>
+      </div>
+
+      <div class="portal-cards-grid">
+        
+        <!-- Role 1: Driver Dashboard -->
+        <a href="driver_auth.html" class="portal-card">
+          <div class="portal-card-icon" style="background:#eff6ff; color:#2563eb;">
+            🚍
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700;">Driver Console</h3>
+            <span class="gr-pill-badge gr-pill-blue">Private Portal</span>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); margin-top:6px;">
+            Driver's private cockpit for live passenger check-in, route navigation, and roster oversight.
+          </p>
+          <ul class="portal-features-list">
+            <li><span>🔒</span> Driver login &amp; multi-bus fleet authentication</li>
+            <li><span>✅</span> Auto-verify 1st tap (Board) & 2nd tap (Safe Landing)</li>
+            <li><span>✏️</span> Edit student names for completed/discontinued students</li>
+            <li><span>📍</span> Interactive map picker to customize student boarding points</li>
+            <li><span>👥</span> Full student roster & occupancy counter</li>
+            <li><span>📝</span> On-board unknown RFID card registration</li>
+            <li><span>🆘</span> One-touch emergency SOS dispatch</li>
+          </ul>
+          <div style="margin-top:auto;">
+            <button class="btn-gr btn-gr-primary" style="width:100%;">
+              Driver Login / Register &rarr;
+            </button>
+          </div>
+        </a>
+
+        <!-- Role 2: Parent Dashboard -->
+        <a href="parent_dashboard.html" class="portal-card">
+          <div class="portal-card-icon" style="background:#d1fae5; color:#059669;">
+            👨‍👩‍👧
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700;">Parent Portal</h3>
+            <span class="gr-pill-badge gr-pill-green">Guardian</span>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); margin-top:6px;">
+            Instant peace of mind with driver verification stamps, live bus ETA, and monthly attendance.
+          </p>
+          <ul class="portal-features-list">
+            <li><span>🟢</span> "Boarded & Verified by Driver" real-time status</li>
+            <li><span>📍</span> Live bus GPS tracking & destination ETA</li>
+            <li><span>📅</span> Monthly attendance calendar widget</li>
+            <li><span>🚏</span> Stop-by-stop progression timeline</li>
+            <li><span>📞</span> Direct contact to driver & transport helpdesk</li>
+          </ul>
+          <div style="margin-top:auto;">
+            <button class="btn-gr btn-gr-success" style="width:100%;">
+              Open Parent Portal &rarr;
+            </button>
+          </div>
+        </a>
+
+        <!-- Role 3: Student Dashboard -->
+        <a href="student_dashboard.html" class="portal-card">
+          <div class="portal-card-icon" style="background:#fef3c7; color:#d97706;">
+            🎓
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700;">Student App</h3>
+            <span class="gr-pill-badge gr-pill-orange">Student Pass</span>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); margin-top:6px;">
+            Personal student transport portal with digital RFID bus pass, streak tracking, and bus alerts.
+          </p>
+          <ul class="portal-features-list">
+            <li><span>🎫</span> Digital NFC / RFID bus pass with barcode</li>
+            <li><span>🔥</span> Commute streak counter & monthly score</li>
+            <li><span>🗺️</span> Real-time bus tracking and stop alert</li>
+            <li><span>📜</span> Complete personal journey history</li>
+            <li><span>🆘</span> Instant safety panic emergency button</li>
+          </ul>
+          <div style="margin-top:auto;">
+            <button class="btn-gr btn-gr-outline" style="width:100%; border-color:#cbd5e1;">
+              Open Student App &rarr;
+            </button>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- LIVE HARDWARE SIMULATOR BAR -->
+    <section class="simulator-dock">
+      <div class="sim-title-tag">
+        <span>⚡ LIVE ESP32 RFID TAP SIMULATOR:</span>
+      </div>
+      <div class="sim-btn-group">
+        <button class="btn-sim sim-green" onclick="testTap('RFID-102938')">🟢 Tap: Ajay Pravin (23CS001)</button>
+        <button class="btn-sim sim-green" onclick="testTap('RFID-882194')">🟢 Tap: Deepa Lakshmi (23EC015)</button>
+        <button class="btn-sim sim-green" onclick="testTap('RFID-554412')">🟢 Tap: Rahul Kumar (23ME032)</button>
+        <button class="btn-sim sim-yellow" onclick="testTap('RFID-999999')">🟡 New Card: RFID-999999</button>
+        <button class="btn-sim" onclick="promptCustom()">✏️ Custom RFID</button>
+        <button class="btn-sim" onclick="advanceStop()">📍 Advance Bus Stop</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div class="gr-toast-container" id="toastContainer"></div>
+
+  <!-- Shared Store -->
+  <script src="shared_store.js"></script>
+
+  <script>
+    let stopIdx = 1;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      window.smartBusStore.subscribe((eventType, payload, state) => {
+        if (eventType === 'UNKNOWN_CARD_DETECTED') {
+          showToast(`⚠️ NEW UNREGISTERED CARD SCANNED: ${payload.rfid}! Open Driver Console to register!`, 'warning');
+        } else if (eventType === 'STUDENT_BOARDED') {
+          showToast(`🟢 1st Tap: ${payload.student.name} (${payload.student.student_id}) Boarded BUS001!`, 'success');
+        } else if (eventType === 'STUDENT_LANDED') {
+          showToast(`🏁 2nd Tap: ${payload.student.name} (${payload.student.student_id}) Safely Landed / Dropped Off!`, 'success');
+        } else if (eventType === 'STUDENT_REGISTERED') {
+          showToast(`🎉 Registered & Boarded: ${payload.student.name}!`, 'success');
+        }
+      });
+    });
+
+    function testTap(rfid) {
+      window.smartBusStore.handleIncomingScan(rfid);
+    }
+
+    function promptCustom() {
+      const rfid = prompt("Enter RFID UID (e.g. RFID-889900):", "RFID-556677");
+      if (rfid) window.smartBusStore.handleIncomingScan(rfid);
+    }
+
+    function advanceStop() {
+      stopIdx = (stopIdx + 1) % 4;
+      window.smartBusStore.advanceRoute(stopIdx);
+      const stopName = window.smartBusStore.getState().busData.current_stop;
+      showToast(`📍 Bus reached: ${stopName}`, 'info');
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `gr-toast ${type}`;
+      toast.innerHTML = `<span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>

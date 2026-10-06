@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal — SMARTBUS &bull; GlobalRide</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  
+  <!-- Shared GlobalRide Design System -->
+  <link rel="stylesheet" href="globalride.css">
+
+  <style>
+    /* Section Visibility Controller */
+    .portal-section-view {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .portal-section-view.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Student Selector Hero Card */
+    .student-selector-card {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .student-chips-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .student-roll-chip {
+      background: var(--bg-muted);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-body);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .student-roll-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .student-roll-chip.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: var(--shadow-blue);
+    }
+
+    /* Digital Bus Pass Card */
+    .digital-pass-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 26px 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 300px;
+    }
+
+    .digital-pass-card::before {
+      content: '';
+      position: absolute;
+      left: -50px;
+      bottom: -50px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.4) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .digital-pass-card::after {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: -40px;
+      width: 170px;
+      height: 170px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .nfc-chip-graphic {
+      width: 42px;
+      height: 32px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.5);
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.6);
+      flex-shrink: 0;
+    }
+
+    .nfc-chip-graphic::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .barcode-strip {
+      background: #ffffff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .barcode-line {
+      height: 28px;
+      background: #0f172a;
+      width: 2px;
+    }
+
+    /* Today's Journey Hero Banner Card */
+    .journey-hero-card {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+      color: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 28px 32px;
+      box-shadow: 0 16px 36px -8px rgba(37, 99, 235, 0.35);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .journey-hero-card::after {
+      content: '';
+      position: absolute;
+      right: -30px;
+      bottom: -30px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .journey-telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      background: rgba(0, 0, 0, 0.18);
+      padding: 16px 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    @media (max-width: 900px) {
+      .journey-telemetry-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* Route Stop Timeline Cards */
+    .route-timeline-strip {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 0 10px 0;
+    }
+
+    .timeline-stop-node {
+      min-width: 170px;
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+
+    .timeline-stop-node.passed {
+      border-color: #a7f3d0;
+      background: #f0fdf4;
+    }
+
+    .timeline-stop-node.current {
+      border-color: #93c5fd;
+      background: #eff6ff;
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    /* Profile Key-Value Grid */
+    .profile-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .profile-info-box {
+      background: var(--bg-muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .profile-info-box .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-info-box .value {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Notifications Feed Item */
+    .notif-card {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition-fast);
+    }
+
+    .notif-card:hover {
+      transform: translateX(4px);
+      border-color: var(--primary);
+    }
+
+    .notif-icon-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-viewport">
+    
+    <!-- White Rounded Sidebar (GlobalRide Design) -->
+    <aside class="globalride-sidebar">
+      <a href="index.html" class="brand-wrapper">
+        <div class="brand-logo-icon" style="background:var(--primary-gradient);">🎓</div>
+        <div class="brand-text">STUDENT<span>PORTAL</span></div>
+      </a>
+
+      <!-- Navigation Links for all 8 Sections -->
+      <ul class="sidebar-nav">
+        <li>
+          <a class="nav-link active" onclick="switchStudentTab('dashboard', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">🏠</span>
+              <span>Dashboard</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchStudentTab('pass', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">🪪</span>
+              <span>My RFID Pass</span>
+            </div>
+            <span class="nav-badge" style="background:#d1fae5; color:#065f46;">ACTIVE</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchStudentTab('livebus', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">🚌</span>
+              <span>Live Bus</span>
+            </div>
+            <span class="nav-badge" id="sideLiveBusBadge">BUS001</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchStudentTab('attendance', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">✅</span>
+              <span>Attendance</span>
+            </div>
+            <span class="nav-badge" id="sideRateBadge">98%</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchStudentTab('journey', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">📍</span>
+              <span>My Journey</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchStudentTab('emergency', this)" style="color:#ef4444;">
+            <div class="nav-link-content">
+              <span class="nav-icon">🚨</span>
+              <span>Emergency</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchStudentTab('profile', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">👤</span>
+              <span>My Profile</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="switchStudentTab('settings', this)">
+            <div class="nav-link-content">
+              <span class="nav-icon">⚙️</span>
+              <span>Settings</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <a href="index.html" class="nav-link" title="Portal Hub">
+          <div class="nav-link-content">
+            <span class="nav-icon">🔄</span>
+            <span>Portal Hub</span>
+          </div>
+        </a>
+        <a href="javascript:void(0)" onclick="handleStudentLogout()" class="nav-link" style="color:#ef4444;" title="Sign out of Student Session">
+          <div class="nav-link-content">
+            <span class="nav-icon">🚪</span>
+            <span>Logout</span>
+          </div>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Surface -->
+    <main class="globalride-main">
+      
+      <!-- Top Header -->
+      <header class="globalride-header">
+        <div>
+          <span style="font-size:12px; color:var(--text-muted); font-weight:600;" id="headerGreetingSubtitle">SMARTBUS TRANSPORTATION SUITE</span>
+          <h2 style="font-family:'Space Grotesk'; font-size:20px; font-weight:700;" id="headerGreetingText">Good Morning, Ajay 👋</h2>
+        </div>
+
+        <!-- Role Quick Switcher Pills -->
+        <div class="role-tabs-bar">
+          <a href="driver_dashboard.html" class="role-tab-btn">🚍 Driver Console</a>
+          <a href="parent_dashboard.html" class="role-tab-btn">👨‍👩‍👧 Parent Portal</a>
+          <a href="student_dashboard.html" class="role-tab-btn active">🎓 Student App</a>
+        </div>
+
+        <div class="header-user-group">
+          <div class="user-profile-pill" onclick="switchStudentTab('profile', null)" title="View Student Profile">
+            <div class="user-avatar-round" id="headerProfileAvatar" style="background:#2563eb;">AP</div>
+            <div class="user-meta-text">
+              <h5 id="headerProfileName">Ajay Pravin</h5>
+              <p id="headerProfileRoll">23CS001 &bull; 3rd Year</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ACTIVE STUDENT SELECTOR & SEARCH BAR (Sticky Header for Testing / Switchability) -->
+      <section class="student-selector-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="gr-pill-badge gr-pill-blue">🎓 STUDENT ACCOUNT</span>
+              <span style="font-size:12px; color:var(--text-muted);">Switch active student profile or look up by Roll No / RFID</span>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <select id="studentSelectDropdown" onchange="selectStudentByRoll(this.value)" class="reg-form-select" style="padding:7px 14px; font-weight:700; min-width:240px; font-size:13px;">
+              <!-- Populated dynamically -->
+            </select>
+            <button type="button" class="btn-gr btn-gr-success" onclick="simulateTapActiveStudent()" title="Simulate RFID Card Tap on Hardware Reader">
+              ⚡ Tap RFID Card
+            </button>
+          </div>
+        </div>
+
+        <div class="student-chips-container">
+          <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Quick Switch:</span>
+          <div id="studentRollChipsList" style="display:inline-flex; gap:6px; flex-wrap:wrap;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           SECTION 1: 🏠 DASHBOARD (HOME)
+           ========================================================================== -->
+      <div id="tab-dashboard" class="portal-section-view active">
+        
+        <!-- Large Today's Journey Status Hero Card -->
+        <section class="journey-hero-card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="gr-pill-badge" style="background:rgba(255,255,255,0.25); color:#ffffff; font-weight:700;">
+                  🚌 TODAY'S COMMUTE
+                </span>
+                <span style="font-size:12px; color:#bfdbfe; font-family:'IBM Plex Mono';" id="dashTodayDate">Today</span>
+              </div>
+              <h2 style="font-family:'Space Grotesk'; font-size:26px; font-weight:800; margin-top:8px;" id="dashBusTitle">
+                BUS001 &bull; Erode Express
+              </h2>
+              <p style="color:#dbeafe; font-size:14px; margin-top:2px;" id="dashRouteSubtitle">
+                Route 4 &bull; Designated Pickup: <strong id="dashPickupLocation">Erode Stand</strong>
+              </p>
+            </div>
+
+            <div style="text-align:right;">
+              <span class="gr-pill-badge" id="dashBoardingStatusPill" style="font-size:13px; padding:6px 16px; background:#10b981; color:#fff; font-weight:800;">
+                ● Boarded
+              </span>
+              <div style="font-size:11px; color:#bfdbfe; margin-top:6px;" id="dashVerificationTime">Verified by Driver at 07:46 AM</div>
+            </div>
+          </div>
+
+          <!-- Telemetry 4-Column Strip -->
+          <div class="journey-telemetry-grid">
+            <div>
+              <div style="font-size:11px; color:#cbd5e1; font-weight:600; text-transform:uppercase;">PICKUP POINT</div>
+              <div style="font-size:16px; font-weight:800; color:#fff; margin-top:2px;" id="dashPickupStop">Erode Stand</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#cbd5e1; font-weight:600; text-transform:uppercase;">CURRENT STOP</div>
+              <div style="font-size:16px; font-weight:800; color:#93c5fd; margin-top:2px;" id="dashCurrentStop">Perundurai Byp</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#cbd5e1; font-weight:600; text-transform:uppercase;">NEXT STOP</div>
+              <div style="font-size:16px; font-weight:800; color:#fde047; margin-top:2px;" id="dashNextStop">Chithode Junction</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#cbd5e1; font-weight:600; text-transform:uppercase;">ESTIMATED ETA</div>
+              <div style="font-size:16px; font-weight:800; color:#a7f3d0; margin-top:2px;" id="dashEtaMins">12 min</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Metrics Row -->
+        <section class="gr-grid-3">
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🪪</span> RFID Pass Status</span>
+              <span class="gr-pill-badge gr-pill-green" id="dashRfidStatusBadge">🟢 Active</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" style="font-size:20px; font-family:'IBM Plex Mono';" id="dashRfidUid">RFID-102938</span>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;" id="dashRfidStateText">Auto-Verified on bus door tap</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🔥</span> Commute Streak</span>
+              <span class="gr-pill-badge gr-pill-green">Top 5%</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" id="dashStreakVal">18</span>
+                <span class="gr-metric-unit">Days Active</span>
+              </div>
+              <span style="font-size:26px;">🔥</span>
+            </div>
+          </div>
+
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">📊</span> Monthly Attendance</span>
+              <span class="gr-pill-badge gr-pill-blue" id="dashRatePill">On Track</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" id="dashAttendanceRateVal">98%</span>
+                <span class="gr-metric-unit">Present</span>
+              </div>
+              <svg width="42" height="42" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="14" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+                <circle cx="20" cy="20" r="14" fill="none" stroke="#2563eb" stroke-width="5" stroke-dasharray="80 15" stroke-dashoffset="0"/>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        <!-- Split Row: Digital Pass Preview & Recent Notifications -->
+        <section class="gr-grid-current-trip">
+          
+          <!-- Pass Summary Card -->
+          <div class="digital-pass-card" style="min-height:260px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div class="nfc-chip-graphic"></div>
+                <div>
+                  <span style="font-size:10px; color:#94a3b8; letter-spacing:1px; font-weight:700;">DIGITAL RFID SMARTPASS</span>
+                  <h3 style="font-size:18px; font-weight:700; margin-top:2px;" id="previewPassName">Ajay Pravin</h3>
+                </div>
+              </div>
+              <span class="gr-pill-badge" id="previewPassBadge" style="background:#10b981; color:#fff; font-weight:700;">ACTIVE</span>
+            </div>
+
+            <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:flex-end;">
+              <div>
+                <div style="font-size:10px; color:#94a3b8;">ROLL NO &bull; BUS</div>
+                <div style="font-family:'IBM Plex Mono'; font-weight:700; font-size:13px; color:#93c5fd;" id="previewPassRoll">23CS001 &bull; BUS001</div>
+                <div style="font-size:10px; color:#94a3b8; margin-top:4px;">PICKUP STOP</div>
+                <div style="font-weight:700; font-size:13px; color:#38bdf8;" id="previewPassPickup">Erode Stand</div>
+              </div>
+              <button class="btn-gr btn-gr-outline" onclick="switchStudentTab('pass', null)" style="font-size:11px; padding:5px 12px; color:#fff; border-color:rgba(255,255,255,0.4);">
+                View Full Pass &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Real-Time Notifications Feed -->
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🔔</span> Commute Notifications</span>
+              <span class="gr-pill-badge gr-pill-blue" id="dashNotifCount">Live Stream</span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px;" id="dashNotifsList">
+              <!-- Dynamically populated from actual state events -->
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+
+      <!-- ==========================================================================
+           SECTION 2: 🪪 MY RFID PASS
+           ========================================================================== -->
+      <div id="tab-pass" class="portal-section-view">
+        <div class="gr-grid-current-trip">
+          
+          <!-- Full Scale Digital Pass Card -->
+          <div class="digital-pass-card">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div class="nfc-chip-graphic"></div>
+                  <div>
+                    <span style="font-size:10px; color:#94a3b8; letter-spacing:1.5px; font-weight:700;">COLLEGE SMARTBUS PASS</span>
+                    <h2 style="font-size:22px; font-weight:800; margin-top:2px;" id="cardStudentName">Ajay Pravin</h2>
+                  </div>
+                </div>
+                <span class="gr-pill-badge" id="cardActiveBadge" style="background:#10b981; color:#fff; font-weight:800;">
+                  🟢 ACTIVE PASS
+                </span>
+              </div>
+
+              <div style="margin-top:20px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
+                <div>
+                  <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">ROLL NO / ID</div>
+                  <div style="font-family:'IBM Plex Mono'; font-weight:700; font-size:15px; color:#93c5fd;" id="cardRollNo">23CS001</div>
+                </div>
+                <div>
+                  <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">DEPARTMENT</div>
+                  <div style="font-weight:700; font-size:13px; color:#fff;" id="cardDept">Computer Science</div>
+                </div>
+                <div>
+                  <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">YEAR</div>
+                  <div style="font-weight:700; font-size:13px; color:#fff;" id="cardYear">3rd Year</div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px; display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;">
+                <div>
+                  <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">ASSIGNED BUS</div>
+                  <div style="font-weight:700; font-size:14px; color:#fde047;" id="cardBusId">BUS001 (Route 4)</div>
+                </div>
+                <div>
+                  <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">PICKUP POINT</div>
+                  <div style="font-weight:700; font-size:14px; color:#38bdf8;" id="cardPickup">Erode Stand</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+                <span style="font-size:10px; color:#94a3b8; letter-spacing:1px;">HARDWARE RFID UID:</span>
+                <span style="font-family:'IBM Plex Mono'; font-weight:700; font-size:13px; color:#fde047;" id="cardRfid">RFID-102938</span>
+              </div>
+
+              <!-- Decorative Barcode -->
+              <div class="barcode-strip" style="margin-top:8px;">
+                <div class="barcode-line" style="width:3px;"></div>
+                <div class="barcode-line" style="width:1px;"></div>
+                <div class="barcode-line" style="width:4px;"></div>
+                <div class="barcode-line" style="width:2px;"></div>
+                <div class="barcode-line" style="width:5px;"></div>
+                <div class="barcode-line" style="width:1px;"></div>
+                <div class="barcode-line" style="width:3px;"></div>
+                <div class="barcode-line" style="width:2px;"></div>
+                <div class="barcode-line" style="width:4px;"></div>
+                <div class="barcode-line" style="width:2px;"></div>
+                <div class="barcode-line" style="width:5px;"></div>
+                <div class="barcode-line" style="width:1px;"></div>
+                <div class="barcode-line" style="width:3px;"></div>
+                <div class="barcode-line" style="width:2px;"></div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+                <span style="font-size:11px; color:#94a3b8;">NFC / RC522 Reader Compatible</span>
+                <button type="button" class="btn-gr btn-gr-primary" onclick="simulateTapActiveStudent()" style="font-size:12px; padding:6px 14px; background:#2563eb; color:#fff; border:1px solid rgba(255,255,255,0.4);">
+                  ⚡ Tap Pass
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pass Details & Boarding Status Box -->
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">📡</span> Live Boarding Status</span>
+              <span class="gr-pill-badge gr-pill-green" id="passBoardingStatusBadge">Verified</span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="background:#f8fafc; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px 16px;">
+                <div style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">CURRENT COMMUTE STATUS</div>
+                <h3 style="font-family:'Space Grotesk'; font-size:18px; font-weight:800; color:var(--text-main); margin-top:4px;" id="passDetailStatusText">
+                  🟢 Boarded &amp; Traveling
+                </h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-top:2px;" id="passDetailExplanation">
+                  Your RFID tap was confirmed by the bus driver. Attendance is recorded on the cloud.
+                </p>
+              </div>
+
+              <div class="profile-info-grid">
+                <div class="profile-info-box">
+                  <span class="label">ASSIGNED BUS DRIVER</span>
+                  <span class="value" id="passDriverName">John Peter</span>
+                </div>
+                <div class="profile-info-box">
+                  <span class="label">DRIVER CONTACT</span>
+                  <span class="value" id="passDriverPhone">+91 98432 10987</span>
+                </div>
+                <div class="profile-info-box">
+                  <span class="label">LAST SCAN TIMESTAMP</span>
+                  <span class="value" style="font-family:'IBM Plex Mono';" id="passLastScanTimestamp">07:46 AM</span>
+                </div>
+                <div class="profile-info-box">
+                  <span class="label">VERIFIED PICKUP STOP</span>
+                  <span class="value" id="passVerifiedStop">Erode Stand</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==========================================================================
+           SECTION 3: 🚌 LIVE BUS (TELEMETRY & LEAFLET MAP)
+           ========================================================================== -->
+      <div id="tab-livebus" class="portal-section-view">
+        
+        <!-- Top Telemetry Row -->
+        <section class="gr-grid-3">
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🚍</span> Bus &amp; Driver</span>
+              <span class="gr-pill-badge gr-pill-green" id="liveBusGpsStatusPill">🟢 GPS Active</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" style="font-size:22px;" id="liveBusIdText">BUS001</span>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;" id="liveDriverNameText">Driver: John Peter</div>
+              </div>
+              <button class="btn-gr btn-gr-outline" onclick="callDriver()" style="font-size:11px; padding:4px 10px;">
+                📞 Call
+              </button>
+            </div>
+          </div>
+
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🏎️</span> Telemetry</span>
+              <span class="gr-pill-badge gr-pill-blue">Active Run</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" id="liveBusSpeedText">42</span>
+                <span class="gr-metric-unit">km/h</span>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Occupancy: <strong id="liveBusOccupancyText">32 / 50</strong> seats</div>
+              </div>
+              <span style="font-size:24px;">📡</span>
+            </div>
+          </div>
+
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">⏱️</span> Stop &amp; ETA</span>
+              <span class="gr-pill-badge gr-pill-green" id="liveEtaPill">On Time</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" style="font-size:20px;" id="liveNextStopText">Perundurai Byp</span>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">ETA: <strong id="liveEtaMinsText">12 mins</strong></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Live Leaflet Map Container -->
+        <div class="gr-card" style="padding:16px;">
+          <div class="gr-card-header" style="margin-bottom:10px;">
+            <span class="gr-card-title"><span class="icon-glyph">🗺️</span> Real-Time GPS Tracking Map</span>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-sim" onclick="recenterStudentMap()">🎯 Locate Bus</button>
+              <button class="btn-sim" onclick="locatePickupMarker()">📍 Locate My Stop</button>
+            </div>
+          </div>
+          
+          <div class="gr-map-container" style="height:360px;">
+            <div id="studentMap" style="height:100%; width:100%; border-radius:var(--radius-md);"></div>
+          </div>
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:12px; color:var(--text-muted); flex-wrap:wrap; gap:8px;">
+            <span>Current Location: <strong id="liveBusCoordText" style="font-family:'IBM Plex Mono'; color:var(--text-main);">11.3410, 77.7170</strong></span>
+            <span>Route: <strong>Erode Express &bull; Route 4</strong></span>
+          </div>
+        </div>
+
+        <!-- Route Stop Timeline Strip -->
+        <div class="gr-card">
+          <div class="gr-card-header" style="margin-bottom:8px;">
+            <span class="gr-card-title"><span class="icon-glyph">🚏</span> Route Progression Timeline</span>
+            <span class="gr-pill-badge gr-pill-blue">4 Stops</span>
+          </div>
+
+          <div class="route-timeline-strip" id="routeTimelineStrip">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==========================================================================
+           SECTION 4: ✅ ATTENDANCE
+           ========================================================================== -->
+      <div id="tab-attendance" class="portal-section-view">
+        
+        <!-- Attendance Stats Overview -->
+        <section class="gr-grid-3">
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">📊</span> Attendance Rate</span>
+              <span class="gr-pill-badge gr-pill-green">Excellent</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" id="attRateBig">98%</span>
+                <span class="gr-metric-unit">Overall</span>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Minimum required: 75%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">📋</span> Journey Summary</span>
+              <span class="gr-pill-badge gr-pill-blue">This Term</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+              <div>
+                <div style="font-size:18px; font-weight:800; color:#059669;" id="attPresentCount">48</div>
+                <div style="font-size:11px; color:var(--text-muted);">Present</div>
+              </div>
+              <div>
+                <div style="font-size:18px; font-weight:800; color:#dc2626;" id="attAbsentCount">1</div>
+                <div style="font-size:11px; color:var(--text-muted);">Absent</div>
+              </div>
+              <div>
+                <div style="font-size:18px; font-weight:800; color:#d97706;" id="attLateCount">1</div>
+                <div style="font-size:11px; color:var(--text-muted);">Late Tap</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gr-card">
+            <div class="gr-card-header">
+              <span class="gr-card-title"><span class="icon-glyph">🔥</span> Commute Streak</span>
+              <span class="gr-pill-badge gr-pill-green">Top Tier</span>
+            </div>
+            <div class="gr-metric-row">
+              <div>
+                <span class="gr-metric-value" id="attStreakBig">18</span>
+                <span class="gr-metric-unit">Consecutive Days</span>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Reward Level: Gold Commuter</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Official Attendance Logs Table -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <div>
+              <h3 style="font-family:'Space Grotesk'; font-size:18px; font-weight:700;">Official Boarding Attendance Records</h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Recorded automatically on bus RFID hardware taps</p>
+            </div>
+            <span class="gr-pill-badge gr-pill-green" id="attLogCountBadge">0 Records</span>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="gr-table">
+              <thead>
+                <tr>
+                  <th>DATE &amp; TIME</th>
+                  <th>BUS</th>
+                  <th>PICKUP STOP</th>
+                  <th>VERIFIED BY DRIVER</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceLogsTableBody">
+                <!-- Dynamically populated from actual attendance logs -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==========================================================================
+           SECTION 5: 📍 MY JOURNEY
+           ========================================================================== -->
+      <div id="tab-journey" class="portal-section-view">
+        
+        <!-- Pickup Stop Details Card -->
+        <div class="gr-card" style="border-left:5px solid var(--primary);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+            <div>
+              <span class="gr-pill-badge gr-pill-blue">📍 DESIGNATED PICKUP LOCATION</span>
+              <h2 style="font-family:'Space Grotesk'; font-size:22px; font-weight:800; margin-top:6px;" id="journeyPickupTitle">
+                Erode Stand
+              </h2>
+              <p style="font-size:13px; color:var(--text-muted); margin-top:2px;" id="journeyPickupNotes">
+                Near Erode Central Bus Stand Gate 2 &bull; Assigned Route: Erode Express (Route 4)
+              </p>
+            </div>
+            <button class="btn-gr btn-gr-outline" onclick="switchStudentTab('livebus', null)">
+              🗺️ View on Map &rarr;
+            </button>
+          </div>
+        </div>
+
+        <!-- Recent Trips Log -->
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">📜</span> Journey History</span>
+            <span class="gr-pill-badge gr-pill-blue">Verified Journeys</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:12px;" id="journeyHistoryCardsList">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==========================================================================
+           SECTION 6: 🚨 EMERGENCY CENTER
+           ========================================================================== -->
+      <div id="tab-emergency" class="portal-section-view">
+        
+        <!-- Emergency SOS Distress Card -->
+        <div class="gr-card" style="border-top:6px solid #ef4444;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+            <div>
+              <span class="gr-pill-badge gr-pill-red">🚨 24/7 SAFETY PROTOCOL</span>
+              <h2 style="font-family:'Space Grotesk'; font-size:22px; font-weight:800; color:#b91c1c; margin-top:6px;">
+                Emergency Distress Dispatch
+              </h2>
+              <p style="font-size:14px; color:var(--text-body); margin-top:4px; max-width:640px;">
+                In the event of an emergency, security concern, or medical issue during your journey, click below to dispatch an instant SOS distress beacon with your live GPS location to Campus Security and the Bus Driver Console.
+              </p>
+            </div>
+            <button class="btn-gr btn-gr-danger" onclick="openStudentSOSModal()" style="font-size:15px; padding:12px 26px; font-weight:800;">
+              🆘 Send Emergency SOS
+            </button>
+          </div>
+        </div>
+
+        <!-- Hotline Contacts Grid -->
+        <div class="categories-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px;">
+          
+          <div class="gr-card">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+              <div style="width:40px; height:40px; border-radius:10px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                👨‍👩‍👧
+              </div>
+              <div>
+                <h4 style="font-weight:700; font-size:15px;">Call Parent / Guardian</h4>
+                <div style="font-size:13px; font-family:'IBM Plex Mono'; color:var(--primary);" id="emergencyParentPhone">+91 94433 11223</div>
+              </div>
+            </div>
+            <button class="btn-gr btn-gr-outline" style="width:100%;" onclick="callParent()">
+              📞 Call Guardian Now
+            </button>
+          </div>
+
+          <div class="gr-card">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+              <div style="width:40px; height:40px; border-radius:10px; background:#d1fae5; color:#059669; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                🚍
+              </div>
+              <div>
+                <h4 style="font-weight:700; font-size:15px;">Contact Bus Driver</h4>
+                <div style="font-size:13px; color:var(--text-muted);" id="emergencyDriverMeta">Driver: John Peter</div>
+              </div>
+            </div>
+            <button class="btn-gr btn-gr-outline" style="width:100%;" onclick="callDriver()">
+              📞 Call Driver
+            </button>
+          </div>
+
+          <div class="gr-card">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+              <div style="width:40px; height:40px; border-radius:10px; background:#fee2e2; color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                🛡️
+              </div>
+              <div>
+                <h4 style="font-weight:700; font-size:15px;">Campus Security Dispatch</h4>
+                <div style="font-size:13px; font-family:'IBM Plex Mono'; color:#ef4444;">+91 91234 56789</div>
+              </div>
+            </div>
+            <button class="btn-gr btn-gr-outline" style="width:100%;" onclick="alert('Calling Campus Security Control Room (+91 91234 56789)...')">
+              🛡️ Call Campus Security
+            </button>
+          </div>
+
+          <div class="gr-card">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+              <div style="width:40px; height:40px; border-radius:10px; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                🏥
+              </div>
+              <div>
+                <h4 style="font-weight:700; font-size:15px;">Campus Medical Health Center</h4>
+                <div style="font-size:13px; font-family:'IBM Plex Mono'; color:#d97706;">+91 94422 33445</div>
+              </div>
+            </div>
+            <button class="btn-gr btn-gr-outline" style="width:100%;" onclick="alert('Calling Campus Health Center (+91 94422 33445)...')">
+              🏥 Call Health Center
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ==========================================================================
+           SECTION 7: 👤 MY PROFILE
+           ========================================================================== -->
+      <div id="tab-profile" class="portal-section-view">
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">📋</span> Student Transport Identity Record</span>
+            <span class="gr-pill-badge gr-pill-green" id="profileEnrollmentStatusBadge">🟢 Active Enrollment</span>
+          </div>
+
+          <div class="profile-info-grid" style="margin-top:10px;">
+            <div class="profile-info-box">
+              <span class="label">FULL NAME</span>
+              <span class="value" id="profFullName">Ajay Pravin</span>
+            </div>
+            <div class="profile-info-box">
+              <span class="label">ROLL NUMBER / STUDENT ID</span>
+              <span class="value" style="font-family:'IBM Plex Mono';" id="profRollNo">23CS001</span>
+            </div>
+            <div class="profile-info-box">
+              <span class="label">DEPARTMENT</span>
+              <span class="value" id="profDepartment">Computer Science</span>
+            </div>
+            <div class="profile-info-box">
+              <span class="label">ACADEMIC YEAR</span>
+              <span class="value" id="profYear">3rd Year</span>
+            </div>
+            <div class="profile-info-box">
+              <span class="label">STUDENT PHONE</span>
+              <span class="value" id="profPhone">+91 98765 43210</span>
+            </div>
+            <div class="profile-info-box">
+              <span class="label">PARENT / GUARDIAN PHONE</span>
+              <span class="value" id="profParentPhone">+91 94433 11223</span>
+            </div>
+            <div class="profile-info-box">
+              <span class="label">HARDWARE RFID UID</span>
+              <span class="value" style="font-family:'IBM Plex Mono'; color:var(--primary);" id="profRfid">RFID-102938</span>
+            </div>
+            <div class="profile-info-box">
+              <span class="label">ASSIGNED VEHICLE</span>
+              <span class="value" id="profBus">BUS001 (Route 4 Express)</span>
+            </div>
+            <div class="profile-info-box" style="grid-column: span 2;">
+              <span class="label">DESIGNATED PICKUP POINT &amp; COORDINATES</span>
+              <span class="value" id="profPickup">Erode Stand (11.341000, 77.717000)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================================================
+           SECTION 8: ⚙️ SETTINGS
+           ========================================================================== -->
+      <div id="tab-settings" class="portal-section-view">
+        <div class="gr-card">
+          <div class="gr-card-header">
+            <span class="gr-card-title"><span class="icon-glyph">⚙️</span> Student Application Settings</span>
+            <span class="gr-pill-badge gr-pill-blue">v2.0 Production</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border-subtle);">
+              <div>
+                <strong>Bus Proximity Alerts</strong>
+                <p style="font-size:12px; color:var(--text-muted);">Notify me when bus is 2 stops away from my pickup point</p>
+              </div>
+              <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--primary);">
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border-subtle);">
+              <div>
+                <strong>Boarding Confirmation SMS</strong>
+                <p style="font-size:12px; color:var(--text-muted);">Send SMS receipt to registered parent phone on tap</p>
+              </div>
+              <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--primary);">
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border-subtle);">
+              <div>
+                <strong>Emergency Broadcast Receiver</strong>
+                <p style="font-size:12px; color:var(--text-muted);">Receive immediate push alert if SOS beacon is triggered</p>
+              </div>
+              <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--primary);">
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px;">
+              <div>
+                <strong style="color:#ef4444;">Student Session Logout</strong>
+                <p style="font-size:12px; color:var(--text-muted);">Exit current student profile and return to main hub</p>
+              </div>
+              <button class="btn-gr btn-gr-danger" onclick="handleStudentLogout()">
+                🚪 Logout Student
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL: STUDENT EMERGENCY SOS CONFIRMATION -->
+  <div class="gr-modal-backdrop" id="modalStudentSOS">
+    <div class="gr-modal" style="border-top:6px solid #ef4444; max-width:480px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-family:'Space Grotesk'; color:#b91c1c; font-size:20px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>🆘</span> Confirm Emergency Distress SOS
+        </h3>
+        <button onclick="closeModal('modalStudentSOS')" style="background:none; border:none; font-size:22px; cursor:pointer;">&times;</button>
+      </div>
+
+      <p style="font-size:14px; color:var(--text-body); line-height:1.5;">
+        Are you sure you want to broadcast an emergency distress alert?
+      </p>
+
+      <div style="background:#fee2e2; border:1px solid #fca5a5; border-radius:var(--radius-md); padding:12px 14px; margin:14px 0; font-size:13px; color:#991b1b;">
+        This alert will transmit your identity (<strong id="sosStudentNameModal">Ajay Pravin</strong>), Roll No (<strong id="sosRollNoModal">23CS001</strong>), and live bus GPS location to Campus Security and the Bus Driver Console immediately.
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; border-top:1px solid var(--border-subtle); padding-top:16px;">
+        <button type="button" class="btn-gr btn-gr-outline" onclick="closeModal('modalStudentSOS')">
+          Cancel
+        </button>
+        <button type="button" class="btn-gr btn-gr-danger" onclick="confirmStudentSOS()" style="font-weight:700; padding:10px 22px;">
+          Send SOS Alert Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="gr-toast-container" id="toastContainer"></div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  
+  <!-- Shared Store -->
+  <script src="shared_store.js"></script>
+
+  <script>
+    let map = null;
+    let busMarker = null;
+    let pickupMarker = null;
+    let currentStudentRoll = "23CS001";
+    let currentTab = "dashboard";
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Initialize Student Active Session / Selection
+      const storedRoll = localStorage.getItem("smartbus_active_student_roll");
+      if (storedRoll) {
+        currentStudentRoll = storedRoll;
+      }
+
+      // 2. Initialize Map
+      initStudentMap();
+
+      // 3. Render all components
+      populateStudentDropdownAndChips();
+      renderAllStudentViews();
+
+      // 4. Subscribe to Store updates
+      window.smartBusStore.subscribe((eventType, payload, state) => {
+        handleStoreEvent(eventType, payload, state);
+      });
+    });
+
+    // ==========================================
+    // TAB SWITCHER
+    // ==========================================
+    function switchStudentTab(tabName, linkEl) {
+      currentTab = tabName;
+      document.querySelectorAll('.portal-section-view').forEach(v => v.classList.remove('active'));
+      const targetView = document.getElementById(`tab-${tabName}`);
+      if (targetView) targetView.classList.add('active');
+
+      document.querySelectorAll('.sidebar-nav .nav-link').forEach(l => l.classList.remove('active'));
+      if (linkEl) {
+        linkEl.classList.add('active');
+      } else {
+        const matchingLink = Array.from(document.querySelectorAll('.sidebar-nav .nav-link')).find(l => l.getAttribute('onclick') && l.getAttribute('onclick').includes(tabName));
+        if (matchingLink) matchingLink.classList.add('active');
+      }
+
+      if (tabName === 'livebus' && map) {
+        setTimeout(() => map.invalidateSize(), 200);
+      }
+    }
+
+    // ==========================================
+    // STUDENT SELECTION & ACTIVE PROFILE
+    // ==========================================
+    function getActiveStudent() {
+      const state = window.smartBusStore.getState();
+      const cleanRoll = (currentStudentRoll || "23CS001").trim().toUpperCase();
+      return state.students.find(s => s.student_id.toUpperCase() === cleanRoll) || 
+             state.students.find(s => s.rfid.toUpperCase() === cleanRoll) || 
+             state.students[0];
+    }
+
+    function selectStudentByRoll(roll) {
+      currentStudentRoll = roll;
+      localStorage.setItem("smartbus_active_student_roll", roll);
+      populateStudentDropdownAndChips();
+      renderAllStudentViews();
+      showToast(`Switched view to Student: ${roll}`, 'info');
+    }
+
+    function populateStudentDropdownAndChips() {
+      const state = window.smartBusStore.getState();
+      const activeStudent = getActiveStudent();
+      if (!activeStudent) return;
+
+      // Dropdown
+      const dropdown = document.getElementById('studentSelectDropdown');
+      if (dropdown) {
+        dropdown.innerHTML = state.students.map(s => `
+          <option value="${s.student_id}" ${s.student_id === activeStudent.student_id ? 'selected' : ''}>
+            ${s.student_id} &bull; ${s.name} (${s.department})
+          </option>
+        `).join('');
+      }
+
+      // Quick Chips
+      const chipsList = document.getElementById('studentRollChipsList');
+      if (chipsList) {
+        chipsList.innerHTML = state.students.map(s => `
+          <button type="button" class="student-roll-chip ${s.student_id === activeStudent.student_id ? 'active' : ''}" onclick="selectStudentByRoll('${s.student_id}')">
+            <span>${s.student_id}</span>
+            <small style="opacity:0.8;">(${s.name.split(' ')[0]})</small>
+          </button>
+        `).join('');
+      }
+    }
+
+    // ==========================================
+    // LEAFLET LIVE BUS MAP
+    // ==========================================
+    function initStudentMap() {
+      const state = window.smartBusStore.getState();
+      const container = document.getElementById('studentMap');
+      if (!container || map) return;
+
+      map = L.map('studentMap', { zoomControl: true }).setView([state.busData.lat, state.busData.lng], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Bus marker
+      const busIcon = L.divIcon({
+        className: 'custom-bus-icon',
+        html: '<div style="background:#2563eb; color:#fff; border:3px solid #fff; border-radius:50%; width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 6px 16px rgba(37,99,235,0.45);">🚍</div>',
+        iconSize: [38, 38],
+        iconAnchor: [19, 19]
+      });
+
+      busMarker = L.marker([state.busData.lat, state.busData.lng], { icon: busIcon }).addTo(map);
+      busMarker.bindPopup(`<b>${state.busData.bus_id} — Live</b><br>Speed: ${state.busData.speed} km/h`);
+
+      // Route polyline
+      const routeCoords = state.routeStops.map(s => [s.lat, s.lng]);
+      L.polyline(routeCoords, { color: '#2563eb', weight: 4, opacity: 0.8, dashArray: '6, 6' }).addTo(map);
+
+      // Route Stop Points
+      state.routeStops.forEach(stop => {
+        L.circleMarker([stop.lat, stop.lng], {
+          radius: 6,
+          fillColor: stop.status === 'passed' ? '#10b981' : stop.status === 'current' ? '#2563eb' : '#64748b',
+          color: '#ffffff',
+          weight: 2,
+          fillOpacity: 1
+        }).bindTooltip(stop.name, { permanent: false }).addTo(map);
+      });
+    }
+
+    function recenterStudentMap() {
+      const state = window.smartBusStore.getState();
+      if (map) map.panTo([state.busData.lat, state.busData.lng]);
+    }
+
+    function locatePickupMarker() {
+      const student = getActiveStudent();
+      if (map && typeof student.pickup_lat === 'number' && typeof student.pickup_lng === 'number' && !isNaN(student.pickup_lat)) {
+        map.panTo([student.pickup_lat, student.pickup_lng]);
+        if (pickupMarker) pickupMarker.openPopup();
+      }
+    }
+
+    // ==========================================
+    // RENDER ALL VIEWS & DATA SYNC
+    // ==========================================
+    function renderAllStudentViews() {
+      const state = window.smartBusStore.getState();
+      const student = getActiveStudent();
+      if (!student) return;
+
+      const activeDriver = state.currentDriver || {
+        name: state.busData.driver_name || "John Peter",
+        phone: state.busData.driver_phone || "+91 98432 10987",
+        bus_id: state.busData.bus_id || "BUS001"
+      };
+
+      const studentLogs = state.attendanceLogs.filter(l => l.rfid === student.rfid);
+      const latestLog = studentLogs[0] || null;
+
+      // 1. Header Greeting (Time of Day)
+      const hour = new Date().getHours();
+      const timeGreeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+      document.getElementById('headerGreetingText').textContent = `${timeGreeting}, ${student.name} 👋`;
+      document.getElementById('headerProfileAvatar').textContent = student.avatar || 'ST';
+      document.getElementById('headerProfileAvatar').style.background = student.avatar_color || '#2563eb';
+      document.getElementById('headerProfileName').textContent = student.name;
+      document.getElementById('headerProfileRoll').textContent = `${student.student_id} • ${student.year || 3} Year`;
+
+      // 2. Dashboard - Today's Journey
+      document.getElementById('dashTodayDate').textContent = new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+      document.getElementById('dashBusTitle').textContent = `${state.busData.bus_id || 'BUS001'} &bull; ${state.busData.route_name || 'Erode Express'}`;
+      document.getElementById('dashPickupLocation').textContent = student.pickup_point;
+      document.getElementById('dashPickupStop').textContent = student.pickup_point;
+      document.getElementById('dashCurrentStop').textContent = state.busData.current_stop || "Erode Stand";
+      document.getElementById('dashNextStop').textContent = state.busData.next_stop || "Perundurai Byp";
+      document.getElementById('dashEtaMins').textContent = `${state.busData.eta_mins || 12} min`;
+
+      // Boarding Status Logic
+      const statusPill = document.getElementById('dashBoardingStatusPill');
+      const verifTime = document.getElementById('dashVerificationTime');
+      const passBadge = document.getElementById('passBoardingStatusBadge');
+      const passDetailText = document.getElementById('passDetailStatusText');
+      const passDetailExplanation = document.getElementById('passDetailExplanation');
+
+      if (student.status === 'Landed') {
+        statusPill.className = 'gr-pill-badge gr-pill-purple';
+        statusPill.textContent = '🏁 Safely Landed';
+        verifTime.textContent = latestLog ? `Drop-off verified at ${latestLog.timestamp}` : 'Journey Completed';
+        passBadge.className = 'gr-pill-badge gr-pill-purple';
+        passBadge.textContent = '🏁 Landed';
+        passDetailText.textContent = '🏁 Journey Completed (Safely Dropped Off)';
+        passDetailExplanation.textContent = `You safely landed at your stop. Verified by ${latestLog ? latestLog.confirmedBy : activeDriver.name}.`;
+      } else if (student.status === 'Boarded') {
+        statusPill.className = 'gr-pill-badge gr-pill-green';
+        statusPill.textContent = '● Boarded & Verified';
+        verifTime.textContent = latestLog ? `Verified by ${latestLog.confirmedBy} at ${latestLog.timestamp}` : 'On board bus';
+        passBadge.className = 'gr-pill-badge gr-pill-green';
+        passBadge.textContent = '🟢 Boarded';
+        passDetailText.textContent = '🟢 Boarded & Traveling';
+        passDetailExplanation.textContent = `Your RFID tap was confirmed by ${activeDriver.name}. Official attendance recorded.`;
+      } else {
+        statusPill.className = 'gr-pill-badge gr-pill-orange';
+        statusPill.textContent = '○ Waiting for Boarding';
+        verifTime.textContent = `Scheduled Pickup at ${student.pickup_point}`;
+        passBadge.className = 'gr-pill-badge gr-pill-blue';
+        passBadge.textContent = 'Active Pass';
+        passDetailText.textContent = '○ Waiting for Boarding';
+        passDetailExplanation.textContent = 'Tap your RFID card at the bus reader door to auto-verify your morning commute.';
+      }
+
+      // Metrics
+      document.getElementById('dashRfidUid').textContent = student.rfid;
+      document.getElementById('dashStreakVal').textContent = student.streak_days || 18;
+      document.getElementById('dashAttendanceRateVal').textContent = student.attendance_rate || '98%';
+      document.getElementById('sideRateBadge').textContent = student.attendance_rate || '98%';
+      document.getElementById('sideLiveBusBadge').textContent = state.busData.bus_id || 'BUS001';
+
+      // Preview Pass
+      document.getElementById('previewPassName').textContent = student.name;
+      document.getElementById('previewPassRoll').textContent = `${student.student_id} • ${state.busData.bus_id}`;
+      document.getElementById('previewPassPickup').textContent = student.pickup_point;
+
+      // 3. Digital Pass Section
+      document.getElementById('cardStudentName').textContent = student.name;
+      document.getElementById('cardRollNo').textContent = student.student_id;
+      document.getElementById('cardDept').textContent = student.department;
+      document.getElementById('cardYear').textContent = `${student.year || 3} Year`;
+      document.getElementById('cardBusId').textContent = `${state.busData.bus_id || student.bus_id || 'BUS001'} (Route 4)`;
+      document.getElementById('cardPickup').textContent = student.pickup_point;
+      document.getElementById('cardRfid').textContent = student.rfid;
+
+      document.getElementById('passDriverName').textContent = activeDriver.name;
+      document.getElementById('passDriverPhone').textContent = activeDriver.phone;
+      document.getElementById('passLastScanTimestamp').textContent = latestLog ? `${latestLog.date} • ${latestLog.timestamp}` : 'Not Scanned Today';
+      document.getElementById('passVerifiedStop').textContent = latestLog ? latestLog.pickup : student.pickup_point;
+
+      // 4. Live Bus Section
+      document.getElementById('liveBusIdText').textContent = state.busData.bus_id || 'BUS001';
+      document.getElementById('liveDriverNameText').textContent = `Driver: ${activeDriver.name}`;
+      document.getElementById('liveBusSpeedText').textContent = state.busData.speed || 42;
+      document.getElementById('liveBusOccupancyText').textContent = `${state.busData.occupancy} / ${state.busData.max_seats || 50}`;
+      document.getElementById('liveNextStopText').textContent = state.busData.next_stop || "Perundurai Byp";
+      document.getElementById('liveEtaMinsText').textContent = `${state.busData.eta_mins || 12} mins`;
+      document.getElementById('liveBusCoordText').textContent = (typeof state.busData.lat === 'number') ? `${state.busData.lat.toFixed(4)}, ${state.busData.lng.toFixed(4)}` : "GPS unavailable";
+
+      if (map && busMarker) {
+        busMarker.setLatLng([state.busData.lat, state.busData.lng]);
+        busMarker.setPopupContent(`<b>${state.busData.bus_id} — Express</b><br>Speed: ${state.busData.speed} km/h<br>Driver: ${activeDriver.name}`);
+      }
+
+      // Update Pickup Marker on Map
+      if (map && typeof student.pickup_lat === 'number' && typeof student.pickup_lng === 'number' && !isNaN(student.pickup_lat)) {
+        if (!pickupMarker) {
+          const pinIcon = L.divIcon({
+            className: 'custom-student-pin',
+            html: `<div style="background:#2563eb; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #fff; box-shadow:0 3px 8px rgba(0,0,0,0.35); color:#fff; font-size:12px;">📍</div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+          });
+          pickupMarker = L.marker([student.pickup_lat, student.pickup_lng], { icon: pinIcon }).addTo(map);
+        } else {
+          pickupMarker.setLatLng([student.pickup_lat, student.pickup_lng]);
+        }
+        pickupMarker.bindPopup(`<b>${student.name}'s Pickup Stop</b><br>📍 ${student.pickup_point}`);
+      }
+
+      // Route Timeline Progression Strip
+      const timelineStrip = document.getElementById('routeTimelineStrip');
+      if (timelineStrip) {
+        timelineStrip.innerHTML = state.routeStops.map(stop => `
+          <div class="timeline-stop-node ${stop.status}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10px; font-weight:700; color:var(--text-muted);">${stop.code}</span>
+              <span class="gr-pill-badge ${stop.status === 'passed' ? 'gr-pill-green' : stop.status === 'current' ? 'gr-pill-blue' : 'gr-pill-orange'}" style="font-size:9px; padding:1px 6px;">
+                ${stop.status.toUpperCase()}
+              </span>
+            </div>
+            <strong style="font-size:13px; color:var(--text-main); margin-top:2px;">${stop.name}</strong>
+            <span style="font-size:11px; font-family:'IBM Plex Mono'; color:var(--text-muted);">${stop.time}</span>
+          </div>
+        `).join('');
+      }
+
+      // 5. Attendance Tab
+      document.getElementById('attRateBig').textContent = student.attendance_rate || '98%';
+      document.getElementById('attStreakBig').textContent = student.streak_days || 18;
+      document.getElementById('attPresentCount').textContent = Math.max(1, studentLogs.length);
+      document.getElementById('attLogCountBadge').textContent = `${studentLogs.length} Records`;
+
+      const attTbody = document.getElementById('attendanceLogsTableBody');
+      if (attTbody) {
+        if (studentLogs.length === 0) {
+          attTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No attendance records found yet. Tap pass to board!</td></tr>`;
+        } else {
+          attTbody.innerHTML = studentLogs.map(l => {
+            const isLanded = l.status && l.status.includes('Landed');
+            return `
+              <tr>
+                <td style="font-family:'IBM Plex Mono'; font-weight:600;">${l.date} &bull; ${l.timestamp}</td>
+                <td><strong>${l.bus_id}</strong></td>
+                <td>${l.pickup}</td>
+                <td style="font-size:12px; color:var(--text-muted);">${l.confirmedBy || `Driver ${activeDriver.name}`}</td>
+                <td>
+                  <span class="gr-pill-badge ${isLanded ? 'gr-pill-purple' : 'gr-pill-green'}">
+                    ${isLanded ? '🏁 ' + l.status : '🟢 ' + l.status}
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      // 6. Journey History Tab
+      document.getElementById('journeyPickupTitle').textContent = student.pickup_point;
+      document.getElementById('journeyPickupNotes').textContent = student.pickup_notes ? `${student.pickup_notes} • Route: Erode Express` : `Designated Pickup Point for ${student.name} • Route 4`;
+
+      const journeyList = document.getElementById('journeyHistoryCardsList');
+      if (journeyList) {
+        if (studentLogs.length === 0) {
+          journeyList.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted);">No completed journeys on record for today.</div>`;
+        } else {
+          journeyList.innerHTML = studentLogs.map((l, idx) => `
+            <div style="background:#f8fafc; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="gr-pill-badge gr-pill-blue">JOURNEY #${studentLogs.length - idx}</span>
+                  <span style="font-family:'IBM Plex Mono'; font-size:12px; color:var(--text-muted);">${l.date}</span>
+                </div>
+                <h4 style="font-family:'Space Grotesk'; font-size:16px; font-weight:700; margin-top:4px;">
+                  ${l.bus_id} &bull; ${l.pickup} &rarr; College Campus
+                </h4>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                  Boarded at <strong>${l.timestamp}</strong> &bull; Verified by ${l.confirmedBy}
+                </div>
+              </div>
+              <span class="gr-pill-badge ${l.status.includes('Landed') ? 'gr-pill-purple' : 'gr-pill-green'}" style="font-size:12px; padding:4px 10px;">
+                ${l.status.includes('Landed') ? '🏁 Completed' : '🟢 Boarded'}
+              </span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // 7. Emergency Tab Meta
+      document.getElementById('emergencyParentPhone').textContent = student.parent_phone || '+91 94433 11223';
+      document.getElementById('emergencyDriverMeta').textContent = `Driver: ${activeDriver.name} (${activeDriver.phone})`;
+
+      // 8. Profile Tab
+      document.getElementById('profFullName').textContent = student.name;
+      document.getElementById('profRollNo').textContent = student.student_id;
+      document.getElementById('profDepartment').textContent = student.department;
+      document.getElementById('profYear').textContent = `${student.year || 3} Year`;
+      document.getElementById('profPhone').textContent = student.phone || '+91 98765 43210';
+      document.getElementById('profParentPhone').textContent = student.parent_phone || '+91 94433 11223';
+      document.getElementById('profRfid').textContent = student.rfid;
+      document.getElementById('profBus').textContent = `${state.busData.bus_id || 'BUS001'} (Express)`;
+      document.getElementById('profPickup').textContent = `${student.pickup_point} ${(typeof student.pickup_lat === 'number' && typeof student.pickup_lng === 'number') ? `(${student.pickup_lat.toFixed(4)}, ${student.pickup_lng.toFixed(4)})` : ''}`;
+
+      // Render Notifications
+      renderNotificationsFeed(student, state);
+    }
+
+    function renderNotificationsFeed(student, state) {
+      const list = document.getElementById('dashNotifsList');
+      if (!list) return;
+
+      const notifs = [];
+      const activeDriver = state.currentDriver || { name: state.busData.driver_name || "John Peter" };
+
+      if (student.status === 'Boarded') {
+        notifs.push({
+          icon: '✅',
+          bg: '#d1fae5',
+          title: 'Boarding Confirmed on Bus',
+          desc: `Your RFID card tap was verified by Driver ${activeDriver.name}.`,
+          time: 'Active'
+        });
+      } else if (student.status === 'Landed') {
+        notifs.push({
+          icon: '🏁',
+          bg: '#f3e8ff',
+          title: 'Safe Drop-off Completed',
+          desc: 'Destination reached safely. Have a great day on campus!',
+          time: 'Completed'
+        });
+      }
+
+      notifs.push({
+        icon: '🚌',
+        bg: '#eff6ff',
+        title: `Bus ${state.busData.bus_id} at ${state.busData.current_stop}`,
+        desc: `Approaching ${state.busData.next_stop}. ETA: ${state.busData.eta_mins} mins.`,
+        time: 'Live'
+      });
+
+      if (state.sosActive) {
+        notifs.unshift({
+          icon: '🚨',
+          bg: '#fee2e2',
+          title: 'Emergency SOS Alert Active',
+          desc: 'Campus Security and transport dispatch are responding.',
+          time: 'URGENT'
+        });
+      }
+
+      list.innerHTML = notifs.map(n => `
+        <div class="notif-card">
+          <div class="notif-icon-circle" style="background:${n.bg};">
+            ${n.icon}
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="font-size:13px; color:var(--text-main);">${n.title}</strong>
+              <span style="font-size:10px; font-family:'IBM Plex Mono'; color:var(--text-muted);">${n.time}</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">${n.desc}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==========================================
+    // ACTION TRIGGERS & SIMULATOR
+    // ==========================================
+    function simulateTapActiveStudent() {
+      const student = getActiveStudent();
+      if (student) {
+        window.smartBusStore.handleIncomingScan(student.rfid);
+      }
+    }
+
+    function handleStoreEvent(type, payload, state) {
+      populateStudentDropdownAndChips();
+      renderAllStudentViews();
+
+      const activeStudent = getActiveStudent();
+      if (activeStudent) {
+        if (type === 'STUDENT_BOARDED' && payload.student.student_id === activeStudent.student_id) {
+          showToast(`🟢 Boarding Confirmed: Welcome on board BUS001!`, 'success');
+        } else if (type === 'STUDENT_LANDED' && payload.student.student_id === activeStudent.student_id) {
+          showToast(`🏁 Safe Landing: You have arrived at your destination!`, 'success');
+        } else if (type === 'SOS_TRIGGERED') {
+          showToast(`🚨 EMERGENCY ALERT BROADCASTED ON YOUR BUS!`, 'danger');
+        }
+      }
+    }
+
+    // Emergency Calling
+    function callParent() {
+      const student = getActiveStudent();
+      const phone = student.parent_phone || "+91 94433 11223";
+      alert(`📞 Calling Parent / Guardian: ${phone}`);
+    }
+
+    function callDriver() {
+      const state = window.smartBusStore.getState();
+      const driver = state.currentDriver || { name: state.busData.driver_name || "John Peter", phone: state.busData.driver_phone || "+91 98432 10987" };
+      alert(`📞 Calling Bus Driver (${driver.name}) at ${driver.phone}`);
+    }
+
+    function openStudentSOSModal() {
+      const student = getActiveStudent();
+      document.getElementById('sosStudentNameModal').textContent = student.name;
+      document.getElementById('sosRollNoModal').textContent = student.student_id;
+      document.getElementById('modalStudentSOS').classList.add('active');
+    }
+
+    function confirmStudentSOS() {
+      closeModal('modalStudentSOS');
+      window.smartBusStore.triggerSOS();
+      showToast('🆘 EMERGENCY SOS DISPATCHED TO CAMPUS SECURITY!', 'danger');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Logout
+    function handleStudentLogout() {
+      if (confirm("Are you sure you want to exit your Student Portal session?")) {
+        localStorage.removeItem("smartbus_active_student_roll");
+        window.location.href = "index.html";
+      }
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `gr-toast ${type}`;
+      toast.innerHTML = `<span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
